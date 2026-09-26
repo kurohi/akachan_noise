@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- No cloud backup: nothing leaves the device. -->
+    <exclude domain="root" path="." />
+</full-backup-content>
