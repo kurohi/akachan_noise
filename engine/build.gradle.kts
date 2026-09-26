@@ -23,10 +23,11 @@ dependencies {
 }
 
 /** Renders every built-in sound and preset to WAV files under build/samples for desktop listening. */
+val samplesDir = layout.buildDirectory.dir("samples")
 tasks.register<JavaExec>("renderSamples") {
     group = "verification"
     description = "Render every built-in sound and preset to WAV in build/samples."
     mainClass = "io.github.kurohi.akachannoise.engine.tools.RenderSamplesKt"
     classpath = sourceSets["main"].runtimeClasspath
-    workingDir = layout.buildDirectory.dir("samples").get().asFile
+    workingDir = samplesDir.get().asFile.apply { mkdirs() }
 }

@@ -6,6 +6,6 @@ import org.junit.Test
 class EngineTest {
     @Test
     fun engineHasVersion() {
-        assertEquals("0.1.0", Engine.VERSION)
+        assertEquals("0.1.0", EngineInfo.VERSION)
     }
 }
