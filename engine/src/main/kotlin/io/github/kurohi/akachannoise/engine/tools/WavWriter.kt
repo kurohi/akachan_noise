@@ -46,7 +46,9 @@ class WavWriter(file: File, private val sampleRate: Int, private val channels: I
     }
 
     private fun writeHeader(frames: Long) {
-        val dataBytes = (frames * channels * 2).toInt()
+        val dataBytesLong = frames * channels * 2
+        require(dataBytesLong <= Int.MAX_VALUE) { "WAV data too large for 32-bit header: $dataBytesLong bytes" }
+        val dataBytes = dataBytesLong.toInt()
         val byteRate = sampleRate * channels * 2
         val header = ByteArray(44)
         val w = WavHeaderWriter(header)

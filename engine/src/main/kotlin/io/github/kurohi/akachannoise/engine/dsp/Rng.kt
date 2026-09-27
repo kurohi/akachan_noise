@@ -6,8 +6,19 @@ package io.github.kurohi.akachannoise.engine.dsp
  * NOT for cryptography — only for audio noise.
  */
 class Rng(seed: Long) {
-    private var s0 = seed
-    private var s1 = seed xor 0x9E3779B97F4A7C15uL.toLong()
+    private var s0: Long
+    private var s1: Long
+
+    init {
+        // Seed via splitmix64 so both state words are well mixed, and clamp
+        // to a non-zero state as xoroshiro128 requires.
+        var sm = seed
+        sm += GAMMA
+        s0 = splitmixMix(sm)
+        sm += GAMMA
+        s1 = splitmixMix(sm)
+        if (s0 == 0L && s1 == 0L) s1 = 1L
+    }
 
     fun nextLong(): Long {
         var l0 = s0
@@ -27,4 +38,17 @@ class Rng(seed: Long) {
 
     /** Uniform in [min, max). */
     fun nextRange(min: Float, max: Float): Float = min + (max - min) * nextFloat()
+
+    private fun splitmixMix(z0: Long): Long {
+        var z = z0
+        z = (z xor (z ushr 30)) * MIX_A
+        z = (z xor (z ushr 27)) * MIX_B
+        return z xor (z ushr 31)
+    }
+
+    private companion object {
+        val GAMMA = 0x9E3779B97F4A7C15uL.toLong()
+        val MIX_A = 0xBF58476D1CE4E5B9uL.toLong()
+        val MIX_B = 0x94D049BB133111EBuL.toLong()
+    }
 }

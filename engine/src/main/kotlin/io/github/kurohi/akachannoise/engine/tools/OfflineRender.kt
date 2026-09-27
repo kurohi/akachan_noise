@@ -28,8 +28,10 @@ object OfflineRender {
         engine.start(mix, fadeInMs)
         WavWriter(file, sampleRate).use { wav ->
             var written = 0
+            var fadeOutStarted = false
             while (written < totalFrames) {
-                if (fadeOutFrames > 0 && written == totalFrames - fadeOutFrames) {
+                if (fadeOutFrames > 0 && !fadeOutStarted && written >= totalFrames - fadeOutFrames) {
+                    fadeOutStarted = true
                     engine.fadeMaster(0f, fadeOutMs)
                 }
                 val frames = minOf(block, totalFrames - written)

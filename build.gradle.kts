@@ -21,7 +21,6 @@ spotless {
         ktlint().editorConfigOverride(
             mapOf(
                 // Compose composables are PascalCase by convention.
-                // Compose composables are PascalCase by convention.
                 "ktlint_standard_function-naming" to "disabled",
             ),
         )

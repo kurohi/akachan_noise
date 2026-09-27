@@ -14,7 +14,6 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 dependencies {
-    implementation(libs.kotlinx.coroutines.android)
     api(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)

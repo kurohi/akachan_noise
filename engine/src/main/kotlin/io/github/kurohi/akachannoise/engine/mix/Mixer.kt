@@ -137,7 +137,6 @@ class Mixer(
         val useWarmth = warmth > 0.001f
 
         val volumeGain = masterVolumeSmoother.next()
-        var monoAmount = -1f
         var i = 0
         var j = 0
         while (i < frames) {
@@ -148,7 +147,6 @@ class Mixer(
                 l = warmthL.low(l)
                 r = warmthR.low(r)
             }
-            if (monoAmount < 0f) monoAmount = monoSmoother.current()
             val m = monoSmoother.next()
             if (m > 0.001f) {
                 val mid = (l + r) * 0.5f
