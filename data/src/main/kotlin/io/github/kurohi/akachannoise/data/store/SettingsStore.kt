@@ -46,7 +46,6 @@ object SettingsPreferences {
     private val PLAY_WITH_OTHER_APPS = booleanPreferencesKey("play_with_other_apps")
     private val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
     private val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
-    private val LAST_MIX_ID = stringPreferencesKey("last_mix_id")
 
     fun read(preferences: Preferences): AppSettings {
         val d = AppSettings.DEFAULTS
@@ -74,7 +73,6 @@ object SettingsPreferences {
             playWithOtherApps = preferences[PLAY_WITH_OTHER_APPS] ?: d.playWithOtherApps,
             keepScreenOn = preferences[KEEP_SCREEN_ON] ?: d.keepScreenOn,
             onboardingDone = preferences[ONBOARDING_DONE] ?: d.onboardingDone,
-            lastMixId = preferences[LAST_MIX_ID],
         )
     }
 
@@ -96,11 +94,6 @@ object SettingsPreferences {
         this[PLAY_WITH_OTHER_APPS] = settings.playWithOtherApps
         this[KEEP_SCREEN_ON] = settings.keepScreenOn
         this[ONBOARDING_DONE] = settings.onboardingDone
-        if (settings.lastMixId != null) {
-            this[LAST_MIX_ID] = settings.lastMixId
-        } else {
-            remove(LAST_MIX_ID)
-        }
     }
 }
 

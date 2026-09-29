@@ -26,7 +26,6 @@ data class AppSettings(
     val playWithOtherApps: Boolean = false,
     val keepScreenOn: Boolean = false,
     val onboardingDone: Boolean = false,
-    val lastMixId: String? = null,
 ) {
     companion object {
         val DEFAULTS = AppSettings()

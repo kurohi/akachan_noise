@@ -39,6 +39,4 @@ class SettingsRepository(
     suspend fun setCrySensitivity(value: Float) = update { it.copy(crySensitivity = value.coerceIn(0f, 1f)) }
 
     suspend fun setOnboardingDone(done: Boolean) = update { it.copy(onboardingDone = done) }
-
-    suspend fun setLastMixId(id: String?) = update { it.copy(lastMixId = id) }
 }

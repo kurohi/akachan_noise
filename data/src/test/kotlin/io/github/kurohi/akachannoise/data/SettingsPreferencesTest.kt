@@ -37,19 +37,10 @@ class SettingsPreferencesTest {
             playWithOtherApps = true,
             keepScreenOn = true,
             onboardingDone = true,
-            lastMixId = "preset.womb",
         )
         val prefs = mutablePreferencesOf()
         with(SettingsPreferences) { prefs.writeSettings(settings) }
         assertEquals(settings, SettingsPreferences.read(prefs))
-    }
-
-    @Test
-    fun `null last mix id is removed not stored`() {
-        val prefs = mutablePreferencesOf()
-        with(SettingsPreferences) { prefs.writeSettings(AppSettings(lastMixId = "user.1")) }
-        with(SettingsPreferences) { prefs.writeSettings(AppSettings(lastMixId = null)) }
-        assertEquals(null, SettingsPreferences.read(prefs).lastMixId)
     }
 
     @Test

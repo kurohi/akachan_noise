@@ -1,4 +1,227 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">あかちゃんノイズ</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">今夜</string>
+    <string name="nav_sounds">音</string>
+    <string name="nav_mixes">ミックス</string>
+    <string name="settings">設定</string>
+    <string name="back">戻る</string>
+    <string name="close">閉じる</string>
+    <string name="done">完了</string>
+    <string name="save">保存</string>
+    <string name="cancel">キャンセル</string>
+    <string name="ok">OK</string>
+
+    <!-- Home -->
+    <string name="home_now_playing">再生中</string>
+    <string name="home_ready">いつでもどうぞ</string>
+    <string name="home_play">再生</string>
+    <string name="home_pause">一時停止</string>
+    <string name="home_sleep_screen">おやすみ画面</string>
+    <string name="home_edit_sounds">音を編集</string>
+    <string name="home_master_volume">音量</string>
+    <string name="home_no_favorites">ミックスの☆を押すとここに並びます</string>
+    <string name="home_soothe_settle">なだめ→ねんね</string>
+    <plurals name="home_layers">
+        <item quantity="other">%1$d 種類の音</item>
+    </plurals>
+    <string name="home_empty_mix">音がまだありません</string>
+
+    <!-- Sounds -->
+    <string name="sounds_title">音</string>
+    <string name="category_all">すべて</string>
+    <string name="category_womb">おなかの中</string>
+    <string name="category_noise">ノイズ</string>
+    <string name="category_nature">自然</string>
+    <string name="category_home">家の音</string>
+    <string name="category_voice">声</string>
+    <string name="category_custom">マイ音</string>
+    <string name="sounds_active">このミックスに入っています</string>
+    <string name="sounds_tune">調整</string>
+    <string name="mixer">ミキサー</string>
+    <string name="mixer_layers">このミックスの音</string>
+    <string name="mixer_remove">削除</string>
+    <string name="mixer_warmth">やわらかさ</string>
+    <string name="mixer_warmth_hint">高い音をおさえて、小さな耳にやさしくします</string>
+    <string name="mixer_mono">モノラル</string>
+    <string name="mixer_mono_hint">スピーカーが1つの端末向け</string>
+    <string name="mixer_full">音は8種類までです。1つ外してから追加してください</string>
+    <string name="save_mix">ミックスを保存</string>
+    <string name="save_mix_title">ミックスの名前</string>
+    <string name="mix_name">名前</string>
+    <string name="mix_saved">保存しました</string>
+
+    <!-- Sound names -->
+    <string name="sound_heartbeat">心音</string>
+    <string name="sound_blood_flow">血流</string>
+    <string name="sound_womb_rumble">おなかの環境音</string>
+    <string name="sound_noise_white">ホワイトノイズ</string>
+    <string name="sound_noise_pink">ピンクノイズ</string>
+    <string name="sound_noise_brown">ブラウンノイズ</string>
+    <string name="sound_ocean">波の音</string>
+    <string name="sound_rain">雨</string>
+    <string name="sound_stream">小川</string>
+    <string name="sound_wind">風</string>
+    <string name="sound_fan">扇風機</string>
+    <string name="sound_hair_dryer">ドライヤー</string>
+    <string name="sound_vacuum">掃除機</string>
+    <string name="sound_car_ride">車の揺れ</string>
+    <string name="sound_plastic_bag">ビニール袋</string>
+    <string name="sound_shush">シューッ</string>
+    <string name="sound_custom">マイ音</string>
+
+    <!-- Sound parameters -->
+    <string name="param_bpm">心拍数</string>
+    <string name="param_muffle">こもり具合</string>
+    <string name="param_variability">自然なゆらぎ</string>
+    <string name="param_depth">脈の深さ</string>
+    <string name="param_period">波の間隔</string>
+    <string name="param_size">波の大きさ</string>
+    <string name="param_distance">遠さ</string>
+    <string name="param_intensity">強さ</string>
+    <string name="param_density">しずくの量</string>
+    <string name="param_gustiness">風の強弱</string>
+    <string name="param_speed">速さ</string>
+    <string name="param_texture">路面の感じ</string>
+    <string name="param_rate">パリパリの頻度</string>
+    <string name="param_rhythm">リズム</string>
+    <string name="param_tone">音色</string>
+    <string name="param_color">色合い</string>
+    <string name="param_width">広がり</string>
+    <string name="param_value_bpm">%1$d bpm</string>
+    <string name="param_value_seconds">%1$d 秒</string>
+    <string name="param_value_percent">%1$d%%</string>
+    <string name="param_rhythm_continuous">連続</string>
+    <string name="param_rhythm_slow">ゆっくり</string>
+    <string name="param_rhythm_fast">はやく</string>
+    <string name="param_color_white">ホワイト</string>
+    <string name="param_color_pink">ピンク</string>
+    <string name="param_color_brown">ブラウン</string>
+
+    <!-- Mixes -->
+    <string name="mixes_title">ミックス</string>
+    <string name="preset_womb">おなかの音</string>
+    <string name="preset_womb_ocean">おなかの音と波</string>
+    <string name="preset_tv_static">砂嵐</string>
+    <string name="preset_pink_rain">ピンクの雨</string>
+    <string name="preset_car_ride">車の揺れ</string>
+    <string name="preset_shush">シューッ</string>
+    <string name="preset_fan_brown">扇風機とブラウン</string>
+    <string name="preset_hair_dryer">ドライヤー</string>
+    <string name="preset_deep_brown">深いブラウン</string>
+    <string name="mixes_presets">すぐ使える</string>
+    <string name="mixes_mine">マイミックス</string>
+    <string name="mixes_empty_title">まだ保存されたミックスはありません</string>
+    <string name="mixes_empty_body">「音」タブでミックスを作って保存すると、ここに並びます。</string>
+    <string name="mixes_create_first">最初のミックスを作る</string>
+    <string name="mixes_new">新しいミックス</string>
+    <string name="mix_play">再生</string>
+    <string name="mix_rename">名前を変更</string>
+    <string name="mix_duplicate">複製</string>
+    <string name="mix_share">共有コード</string>
+    <string name="mix_favorite">お気に入りに追加</string>
+    <string name="mix_unfavorite">お気に入りから外す</string>
+    <string name="mix_delete">削除</string>
+    <string name="mix_delete_undo">削除しました</string>
+    <string name="undo">元に戻す</string>
+    <string name="mix_move_up">上へ</string>
+    <string name="mix_move_down">下へ</string>
+    <string name="mix_share_title">ミックスを共有</string>
+    <string name="mix_share_body">このコードを他のあかちゃんノイズ利用者に送れます。含まれるのはミックスだけで、個人情報は入りません。</string>
+    <string name="mix_share_copy">コードをコピー</string>
+    <string name="mix_share_copied">コピーしました</string>
+    <string name="mix_import_invalid">このコードは読み取れませんでした</string>
+    <string name="mix_imported">マイミックスに追加しました</string>
+
+    <!-- Timer -->
+    <string name="timer_title">スリープタイマー</string>
+    <string name="timer_minutes">%1$d 分</string>
+    <string name="timer_off">タイマーなし</string>
+    <string name="timer_keep_playing">そのまま再生</string>
+    <string name="timer_fade_out">フェードアウト</string>
+    <string name="timer_fade_none">フェードなし</string>
+    <string name="timer_fade_seconds">%1$d 秒でフェード</string>
+    <string name="timer_step_down">なだめ→ねんね</string>
+    <string name="timer_step_down_hint">寝かしつけ中は少し大きめ、寝たら半分の音量へゆっくり下げます。</string>
+    <string name="timer_remaining">残り %1$s</string>
+    <string name="timer_add_15">+15 分</string>
+    <string name="timer_cancel">タイマーを解除</string>
+    <string name="timer_set">%1$d 分のタイマーを設定しました</string>
+
+    <!-- Sleep screen -->
+    <string name="sleep_title">おやすみ</string>
+    <string name="sleep_unlock_hint">長押しで解除</string>
+    <string name="sleep_touch_lock">タッチロック中</string>
+    <string name="sleep_touch_lock_hint">画面のタップを無効にしています。小さな手が触れても設定は変わりません。ロックボタンを2秒長押しで解除できます。</string>
+    <string name="sleep_lock">ロック</string>
+    <string name="sleep_lock_hint">ロックすると、小さな手が触れても設定は変わりません</string>
+    <string name="sleep_unlocked">解除しました</string>
+
+    <!-- Settings -->
+    <string name="settings_playback">再生</string>
+    <string name="settings_default_timer">標準のタイマー</string>
+    <string name="settings_default_timer_hint">タイマーを決めずに再生したときに使われます。</string>
+    <string name="settings_appearance">見た目</string>
+    <string name="settings_theme">テーマ</string>
+    <string name="settings_theme_system">端末の設定に合わせる</string>
+    <string name="settings_theme_light">ライト</string>
+    <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_theme_night_red">ナイトレッド</string>
+    <string name="settings_dynamic_color">壁紙の色を使う</string>
+    <string name="settings_dynamic_color_hint">Android 12 以降で、壁紙の色を反映します。</string>
+    <string name="settings_volume_cap">音量の上限</string>
+    <string name="settings_volume_cap_hint">アプリが出せる音量の上限です。小さくするほど小さな耳に安全です。</string>
+    <string name="settings_data">データ</string>
+    <string name="settings_export">ミックスを書き出す</string>
+    <string name="settings_export_hint">ミックスと設定をファイルに保存します。どこにも送信しません。</string>
+    <string name="settings_import">ミックスを読み込む</string>
+    <string name="settings_import_hint">以前に書き出したファイルを復元します。</string>
+    <string name="settings_delete_all">すべて削除</string>
+    <string name="settings_delete_all_hint">この端末からミックス・お気に入り・設定をすべて消します。</string>
+    <string name="settings_delete_all_confirm_title">すべて削除しますか？</string>
+    <string name="settings_delete_all_confirm_body">元に戻せません。この端末からミックスと設定が消えます。</string>
+    <string name="settings_about">このアプリについて</string>
+    <string name="settings_safety">安全に使うために</string>
+    <string name="settings_privacy">プライバシー</string>
+    <string name="settings_reliability">一晩中再生させるには</string>
+    <string name="settings_reliability_body">端末によっては、バッテリー節約のためにバックグラウンドのアプリを止めます。音が勝手に止まる場合は、端末のバッテリー設定で「あかちゃんノイズ」のバックグラウンド動作を許可してください。</string>
+    <string name="settings_exported">バックアップを保存しました</string>
+    <string name="settings_imported">バックアップを復元しました</string>
+    <string name="settings_import_failed">このファイルは読み取れませんでした</string>
+    <string name="settings_version">バージョン %1$s</string>
+    <string name="settings_license">GNU GPL-3.0 — 自由でオープンソース</string>
+    <string name="settings_source">ソースコード</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_private_title">データは端末の外に出ません</string>
+    <string name="onboarding_private_body">あかちゃんノイズはインターネットの権限を一切持ちません。アカウントも広告も解析もなく、ミックスや録音は端末の中だけに保存されます。</string>
+    <string name="onboarding_safe_title">小さな耳にやさしく</string>
+    <string name="onboarding_safe_body">端末はできるだけ赤ちゃんから離して置き、効く範囲でいちばん小さい音量にし、タイマーで夜を終わらせましょう。音の変化はすべてゆっくりフェードするので、びっくりさせません。</string>
+    <string name="onboarding_start">おなかの音ではじめる</string>
+    <string name="onboarding_next">次へ</string>
+    <string name="onboarding_skip">スキップ</string>
+
+    <!-- Safety -->
+    <string name="safety_intro">音は寝かしつけの助けになりますが、かけ方が大切です。</string>
+    <string name="safety_distance_title">少し離して置く</string>
+    <string name="safety_distance_body">端末やスピーカーはベッドの中ではなく、部屋の離れた場所に。できるだけ遠くが基本です。</string>
+    <string name="safety_volume_title">効く範囲で小さく</string>
+    <string name="safety_volume_body">思うより小さく始めて、それでも落ち着かないときだけ上げましょう。大きな音を長く聞かせるのは誰にとってもよくありません。</string>
+    <string name="safety_timer_title">終わるようにする</string>
+    <string name="safety_timer_body">タイマーは最初からオンです。一晩中かける必要はほとんどありません。寝付いたら静かなほうがよいのです。</string>
+    <string name="safety_limits_title">このアプリにできないこと</string>
+    <string name="safety_limits_body">端末は部屋の実際の音量を測れません。音量つまみは目安として、ご自身の耳と、助産師・保健師などの助言を優先してください。医療機器でもベビーモニターでもありません。</string>
+
+    <!-- Privacy -->
+    <string name="privacy_short">あかちゃんノイズは、あなたのデータがあなたのものであり続けるように作られています。</string>
+    <string name="privacy_no_internet_title">インターネット権限なし</string>
+    <string name="privacy_no_internet_body">インターネットの権限を要求していないため、どこにも送信できません。将来それが変わればビルドチェックが失敗します。</string>
+    <string name="privacy_local_title">すべて端末の中に</string>
+    <string name="privacy_local_body">ミックス・お気に入り・設定はアプリ専用の保存領域にあります。クラウドバックアップは無効です。控えが必要ならご自身でファイルに書き出せます。</string>
+    <string name="privacy_mic_title">マイクは任意です</string>
+    <string name="privacy_mic_body">マイクを使うのは、任意の「泣き声で再開」と自分の音の録音だけです。音声はメモリ上で解析され、ご自身で保存しない限り記録も送信もされません。</string>
+    <string name="privacy_permissions_title">権限について</string>
+    <string name="privacy_permissions_body">バックグラウンド再生と、任意の通知のみです。位置情報・連絡先・ストレージへのアクセスはありません。ファイルはシステムのファイル選択からのみ開きます。</string>
 </resources>

@@ -1,4 +1,228 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Akachan Noise</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Tonight</string>
+    <string name="nav_sounds">Sounds</string>
+    <string name="nav_mixes">Mixes</string>
+    <string name="settings">Settings</string>
+    <string name="back">Back</string>
+    <string name="close">Close</string>
+    <string name="done">Done</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+    <!-- Home -->
+    <string name="home_now_playing">Now playing</string>
+    <string name="home_ready">Ready when you are</string>
+    <string name="home_play">Play</string>
+    <string name="home_pause">Pause</string>
+    <string name="home_sleep_screen">Sleep screen</string>
+    <string name="home_edit_sounds">Edit sounds</string>
+    <string name="home_master_volume">Volume</string>
+    <string name="home_no_favorites">Tap the star on a mix to keep it here</string>
+    <string name="home_soothe_settle">Soothe → Settle</string>
+    <plurals name="home_layers">
+        <item quantity="one">%1$d sound</item>
+        <item quantity="other">%1$d sounds</item>
+    </plurals>
+    <string name="home_empty_mix">No sounds yet — add some</string>
+
+    <!-- Sounds -->
+    <string name="sounds_title">Sounds</string>
+    <string name="category_all">All</string>
+    <string name="category_womb">Womb</string>
+    <string name="category_noise">Noise</string>
+    <string name="category_nature">Nature</string>
+    <string name="category_home">Home</string>
+    <string name="category_voice">Voice</string>
+    <string name="category_custom">My sounds</string>
+    <string name="sounds_active">In this mix</string>
+    <string name="sounds_tune">Adjust</string>
+    <string name="mixer">Mixer</string>
+    <string name="mixer_layers">Sounds in this mix</string>
+    <string name="mixer_remove">Remove</string>
+    <string name="mixer_warmth">Warmth</string>
+    <string name="mixer_warmth_hint">Softens the high end — gentler on tiny ears</string>
+    <string name="mixer_mono">Mono</string>
+    <string name="mixer_mono_hint">For phones with one speaker</string>
+    <string name="mixer_full">That is all 8 sounds — remove one to add another</string>
+    <string name="save_mix">Save mix</string>
+    <string name="save_mix_title">Name this mix</string>
+    <string name="mix_name">Mix name</string>
+    <string name="mix_saved">Mix saved</string>
+
+    <!-- Sounds names -->
+    <string name="sound_heartbeat">Heartbeat</string>
+    <string name="sound_blood_flow">Blood flow</string>
+    <string name="sound_womb_rumble">Womb ambience</string>
+    <string name="sound_noise_white">White noise</string>
+    <string name="sound_noise_pink">Pink noise</string>
+    <string name="sound_noise_brown">Brown noise</string>
+    <string name="sound_ocean">Ocean waves</string>
+    <string name="sound_rain">Rain</string>
+    <string name="sound_stream">Stream</string>
+    <string name="sound_wind">Wind</string>
+    <string name="sound_fan">Fan</string>
+    <string name="sound_hair_dryer">Hair dryer</string>
+    <string name="sound_vacuum">Vacuum</string>
+    <string name="sound_car_ride">Car ride</string>
+    <string name="sound_plastic_bag">Plastic bag</string>
+    <string name="sound_shush">Shush</string>
+    <string name="sound_custom">My sound</string>
+
+    <!-- Sound parameters -->
+    <string name="param_bpm">Heart rate</string>
+    <string name="param_muffle">Muffled</string>
+    <string name="param_variability">Natural rhythm</string>
+    <string name="param_depth">Pulse depth</string>
+    <string name="param_period">Wave length</string>
+    <string name="param_size">Wave size</string>
+    <string name="param_distance">Distance</string>
+    <string name="param_intensity">Intensity</string>
+    <string name="param_density">Droplets</string>
+    <string name="param_gustiness">Gusts</string>
+    <string name="param_speed">Speed</string>
+    <string name="param_texture">Road texture</string>
+    <string name="param_rate">Crinkle rate</string>
+    <string name="param_rhythm">Rhythm</string>
+    <string name="param_tone">Tone</string>
+    <string name="param_color">Colour</string>
+    <string name="param_width">Stereo width</string>
+    <string name="param_value_bpm">%1$d bpm</string>
+    <string name="param_value_seconds">%1$d s</string>
+    <string name="param_value_percent">%1$d%%</string>
+    <string name="param_rhythm_continuous">Continuous</string>
+    <string name="param_rhythm_slow">Slow</string>
+    <string name="param_rhythm_fast">Fast</string>
+    <string name="param_color_white">White</string>
+    <string name="param_color_pink">Pink</string>
+    <string name="param_color_brown">Brown</string>
+
+    <!-- Mixes -->
+    <string name="mixes_title">Mixes</string>
+    <string name="preset_womb">Womb</string>
+    <string name="preset_womb_ocean">Womb &amp; Ocean</string>
+    <string name="preset_tv_static">TV Static</string>
+    <string name="preset_pink_rain">Pink Rain</string>
+    <string name="preset_car_ride">Car Ride</string>
+    <string name="preset_shush">Shush</string>
+    <string name="preset_fan_brown">Fan &amp; Brown</string>
+    <string name="preset_hair_dryer">Hair Dryer</string>
+    <string name="preset_deep_brown">Deep Brown</string>
+    <string name="mixes_presets">Ready to play</string>
+    <string name="mixes_mine">My mixes</string>
+    <string name="mixes_empty_title">No saved mixes yet</string>
+    <string name="mixes_empty_body">Build a mix from the Sounds tab and save it — it will appear here.</string>
+    <string name="mixes_create_first">Create your first mix</string>
+    <string name="mixes_new">New mix</string>
+    <string name="mix_play">Play</string>
+    <string name="mix_rename">Rename</string>
+    <string name="mix_duplicate">Duplicate</string>
+    <string name="mix_share">Share code</string>
+    <string name="mix_favorite">Add to favorites</string>
+    <string name="mix_unfavorite">Remove from favorites</string>
+    <string name="mix_delete">Delete</string>
+    <string name="mix_delete_undo">Mix deleted</string>
+    <string name="undo">Undo</string>
+    <string name="mix_move_up">Move up</string>
+    <string name="mix_move_down">Move down</string>
+    <string name="mix_share_title">Share this mix</string>
+    <string name="mix_share_body">Send this code to another Akachan Noise user. It contains only the mix — no personal data.</string>
+    <string name="mix_share_copy">Copy code</string>
+    <string name="mix_share_copied">Code copied</string>
+    <string name="mix_import_invalid">That code could not be read</string>
+    <string name="mix_imported">Mix added to My mixes</string>
+
+    <!-- Timer -->
+    <string name="timer_title">Sleep timer</string>
+    <string name="timer_minutes">%1$d min</string>
+    <string name="timer_off">No timer</string>
+    <string name="timer_keep_playing">Keep playing</string>
+    <string name="timer_fade_out">Fade out</string>
+    <string name="timer_fade_none">No fade</string>
+    <string name="timer_fade_seconds">%1$d s fade</string>
+    <string name="timer_step_down">Soothe → Settle</string>
+    <string name="timer_step_down_hint">Louder while your baby is settling, then a gentle glide down to half volume.</string>
+    <string name="timer_remaining">%1$s left</string>
+    <string name="timer_add_15">+15 min</string>
+    <string name="timer_cancel">Cancel timer</string>
+    <string name="timer_set">Timer set for %1$d min</string>
+
+    <!-- Sleep screen -->
+    <string name="sleep_title">Sleep</string>
+    <string name="sleep_unlock_hint">Hold to unlock</string>
+    <string name="sleep_touch_lock">Touch lock on</string>
+    <string name="sleep_touch_lock_hint">The screen ignores taps so a curious hand cannot change anything. Hold the lock button for 2 seconds to unlock.</string>
+    <string name="sleep_lock">Lock</string>
+    <string name="sleep_lock_hint">Tap the lock so a curious hand cannot change anything</string>
+    <string name="sleep_unlocked">Unlocked</string>
+
+    <!-- Settings -->
+    <string name="settings_playback">Playback</string>
+    <string name="settings_default_timer">Default timer</string>
+    <string name="settings_default_timer_hint">Used when you start a mix without setting a timer.</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_night_red">Night-red</string>
+    <string name="settings_dynamic_color">Dynamic colour</string>
+    <string name="settings_dynamic_color_hint">Use the colours from your wallpaper (Android 12+).</string>
+    <string name="settings_volume_cap">Volume limit</string>
+    <string name="settings_volume_cap_hint">Caps how loud the app can get. Lower is safer for small ears.</string>
+    <string name="settings_data">Your data</string>
+    <string name="settings_export">Export mixes</string>
+    <string name="settings_export_hint">Save a file with your mixes and settings. Nothing is uploaded.</string>
+    <string name="settings_import">Import mixes</string>
+    <string name="settings_import_hint">Restore a file you exported earlier.</string>
+    <string name="settings_delete_all">Delete everything</string>
+    <string name="settings_delete_all_hint">Removes every mix, favourite and setting from this device.</string>
+    <string name="settings_delete_all_confirm_title">Delete everything?</string>
+    <string name="settings_delete_all_confirm_body">This cannot be undone. Your mixes and settings will be gone from this device.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_safety">Safety guide</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_reliability">Keep it playing all night</string>
+    <string name="settings_reliability_body">Some phone makers stop background apps to save battery. If the sound stops on its own, allow Akachan Noise to run in the background in your phone\'s battery settings.</string>
+    <string name="settings_exported">Backup saved</string>
+    <string name="settings_imported">Backup restored</string>
+    <string name="settings_import_failed">That file could not be read</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_license">GNU GPL-3.0 — free and open source</string>
+    <string name="settings_source">Source code</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_private_title">Nothing leaves this phone</string>
+    <string name="onboarding_private_body">Akachan Noise has no internet permission at all. No accounts, no ads, no analytics — your mixes and recordings stay on your device.</string>
+    <string name="onboarding_safe_title">Kind to tiny ears</string>
+    <string name="onboarding_safe_body">Keep the phone as far from your baby as practical, use the lowest volume that works, and let the timer end the night. Every change fades gently so nothing startles.</string>
+    <string name="onboarding_start">Start with the womb</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_skip">Skip</string>
+
+    <!-- Safety -->
+    <string name="safety_intro">Sound can help a baby settle, but how you play it matters.</string>
+    <string name="safety_distance_title">Keep some distance</string>
+    <string name="safety_distance_body">Put the phone or speaker across the room, not in the cot. As far away as practical is the goal.</string>
+    <string name="safety_volume_title">As quiet as works</string>
+    <string name="safety_volume_body">Start lower than you think you need and raise it only if your baby is still unsettled. Prolonged loud sound is not good for anyone.</string>
+    <string name="safety_timer_title">Let it end</string>
+    <string name="safety_timer_body">The timer is on by default. Sound all night is rarely needed; once your baby is asleep, quieter is better.</string>
+    <string name="safety_limits_title">What this app cannot do</string>
+    <string name="safety_limits_body">Phones cannot measure how loud the sound actually is in the room. Treat the volume slider as guidance, trust your ears, and follow your health visitor\'s advice. This app is not a medical device or a baby monitor.</string>
+
+    <!-- Privacy -->
+    <string name="privacy_short">Akachan Noise is built so your data stays yours.</string>
+    <string name="privacy_no_internet_title">No internet access</string>
+    <string name="privacy_no_internet_body">The app does not ask for the internet permission, so it cannot send anything anywhere. A build check fails if that ever changes.</string>
+    <string name="privacy_local_title">Everything stays on the device</string>
+    <string name="privacy_local_body">Mixes, favourites and settings live in the app\'s private storage. Cloud backup is off. You can export a file yourself if you want a copy.</string>
+    <string name="privacy_mic_title">The microphone is opt-in</string>
+    <string name="privacy_mic_body">The microphone is used only for the optional cry-activated restart and for recording your own sounds. Audio is analysed in memory and never stored or sent unless you save it yourself.</string>
+    <string name="privacy_permissions_title">Permissions</string>
+    <string name="privacy_permissions_body">Playback in the background, and optionally notifications. No location, no contacts, no storage access — files are only opened through the system file picker.</string>
 </resources>

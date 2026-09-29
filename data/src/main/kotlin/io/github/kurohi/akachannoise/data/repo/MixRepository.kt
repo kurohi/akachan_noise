@@ -19,35 +19,36 @@ class MixRepository(
     private val store: UserDataStore,
     scope: CoroutineScope,
 ) {
-    private val userData = store.data.stateIn(scope, SharingStarted.Eagerly, UserData.EMPTY)
+    /** The whole persisted document (used for backup export). */
+    val data: StateFlow<UserData> = store.data.stateIn(scope, SharingStarted.Eagerly, UserData.EMPTY)
 
     val presets: List<MixSpec> = BuiltInPresets.presets
 
-    val userMixes: StateFlow<List<MixSpec>> = userData
+    val userMixes: StateFlow<List<MixSpec>> = data
         .map { it.mixes }
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    val favoriteIds: StateFlow<List<String>> = userData
+    val favoriteIds: StateFlow<List<String>> = data
         .map { it.favoriteIds }
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    val lastUsedMixId: StateFlow<String?> = userData
+    val lastUsedMixId: StateFlow<String?> = data
         .map { it.lastUsedMixId }
         .stateIn(scope, SharingStarted.Eagerly, null)
 
     /** Favorite mixes resolved to specs, in favorite order. */
-    val favoriteMixes: StateFlow<List<MixSpec>> = userData
+    val favoriteMixes: StateFlow<List<MixSpec>> = data
         .map { data ->
             data.favoriteIds.mapNotNull { id -> data.mixById(id) }
         }
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     /** All playable mixes: the user's mixes first, then the presets. */
-    val allMixes: StateFlow<List<MixSpec>> = userData
+    val allMixes: StateFlow<List<MixSpec>> = data
         .map { data -> data.mixes + presets }
         .stateIn(scope, SharingStarted.Eagerly, presets)
 
-    fun mixById(id: String): MixSpec? = userData.value.mixById(id)
+    fun mixById(id: String): MixSpec? = data.value.mixById(id)
 
     suspend fun saveMix(mix: MixSpec) {
         require(!isPresetId(mix.id)) { "Presets are read-only; duplicate them first" }
@@ -145,8 +146,11 @@ class MixRepository(
         store.update { UserData.EMPTY }
     }
 
+    /** A name not used by any preset or saved mix ("Womb" → "Womb (2)"). */
+    fun uniqueMixName(base: String): String = uniqueName(base)
+
     private fun uniqueName(base: String): String {
-        val existing = userData.value.mixes.map { it.name }.toSet() +
+        val existing = data.value.mixes.map { it.name }.toSet() +
             presets.map { it.name }.toSet()
         if (base !in existing) return base
         var index = 2

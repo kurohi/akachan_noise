@@ -30,6 +30,7 @@ data class PlaybackState(
     val currentMix: MixSpec? = null,
     val masterVolume: Float = 1f,
     val timerRemainingMs: Long? = null,
+    val timerTotalMs: Long? = null,
     val timerEndsAtElapsed: Long? = null,
     val sootheToSettle: Boolean = false,
 )
@@ -172,6 +173,7 @@ class PlaybackController private constructor(context: Context) {
         _state.value = _state.value.copy(
             timerEndsAtElapsed = endsAt,
             timerRemainingMs = durationMs,
+            timerTotalMs = durationMs,
             sootheToSettle = stepDown,
         )
         timerJob = scope.launch {
@@ -194,6 +196,7 @@ class PlaybackController private constructor(context: Context) {
         _state.value = _state.value.copy(
             timerEndsAtElapsed = null,
             timerRemainingMs = null,
+            timerTotalMs = null,
             sootheToSettle = false,
         )
     }
@@ -204,6 +207,7 @@ class PlaybackController private constructor(context: Context) {
             playing = false,
             timerEndsAtElapsed = null,
             timerRemainingMs = null,
+            timerTotalMs = null,
             sootheToSettle = false,
         )
         abandonFocus()
