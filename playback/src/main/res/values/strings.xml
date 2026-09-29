@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cry_channel_name">Cry-activated restart</string>
+    <string name="cry_channel_description">Listens for crying after the sleep timer ends</string>
+    <string name="cry_notification_title">Cry-activated restart</string>
+    <string name="cry_notification_armed">Ready to listen when the timer ends</string>
+    <string name="cry_notification_listening">Listening for crying · until %1$s</string>
+    <string name="cry_action_stop">Stop listening</string>
+    <string name="cry_action_play_now">Play now</string>
+</resources>

@@ -225,6 +225,30 @@
     <string name="settings_license">GNU GPL-3.0 — 自由でオープンソース</string>
     <string name="settings_source">ソースコード</string>
 
+    <!-- Cry-activated restart -->
+    <string name="settings_cry">泣き声で再開</string>
+    <string name="settings_cry_hint">スリープタイマーが終わったあと、この端末で泣き声を聞き取り、泣いていれば直前のミックスを再開します。録音も送信もしません。解析はメモリ上だけで行われます。</string>
+    <string name="settings_cry_enable">泣き声を聞き取る</string>
+    <string name="settings_cry_sensitivity">感度</string>
+    <string name="settings_cry_sensitivity_hint">高くすると小さな泣き声も拾いますが、他の音に反応することもあります。</string>
+    <string name="settings_cry_window">聞き取る時間</string>
+    <string name="settings_cry_play_minutes">再開する長さ</string>
+    <string name="settings_cry_test">聞き取りを試す</string>
+    <string name="settings_cry_test_hint">お部屋で泣き声を拾えるか確認できます</string>
+    <string name="cry_hours">%1$d 時間</string>
+    <string name="cry_minutes">%1$d 分</string>
+    <string name="cry_test_title">聞き取りを試す</string>
+    <string name="cry_test_body">泣き声を出してみるか、泣き声の録音を再生してみてください。マイクが拾っている音がメーターに表示されます。保存はされません。</string>
+    <string name="cry_test_level">マイクのレベル</string>
+    <string name="cry_test_pitch">ピッチ %1$d Hz</string>
+    <string name="cry_test_no_pitch">はっきりしたピッチなし</string>
+    <string name="cry_test_detected">泣き声を検出しました — ミックスが再開されます</string>
+    <string name="cry_test_listening">聞き取り中…</string>
+    <string name="cry_test_stop">停止</string>
+    <string name="cry_test_needs_permission">この機能にはマイクの権限が必要です。</string>
+    <string name="cry_test_grant">マイクを許可</string>
+    <string name="cry_test_denied">マイクの権限がないとこの機能はオフのままです。</string>
+
     <!-- Onboarding -->
     <string name="onboarding_private_title">データは端末の外に出ません</string>
     <string name="onboarding_private_body">あかちゃんノイズはインターネットの権限を一切持ちません。アカウントも広告も解析もなく、ミックスや録音は端末の中だけに保存されます。</string>

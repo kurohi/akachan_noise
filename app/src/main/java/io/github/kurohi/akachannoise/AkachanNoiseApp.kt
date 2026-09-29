@@ -29,6 +29,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import io.github.kurohi.akachannoise.engine.model.MixSpec
+import io.github.kurohi.akachannoise.nav.CryTestKey
 import io.github.kurohi.akachannoise.nav.HomeKey
 import io.github.kurohi.akachannoise.nav.MixesKey
 import io.github.kurohi.akachannoise.nav.OnboardingKey
@@ -45,6 +46,7 @@ import io.github.kurohi.akachannoise.ui.mixes.MixesScreen
 import io.github.kurohi.akachannoise.ui.onboarding.OnboardingScreen
 import io.github.kurohi.akachannoise.ui.recorder.RecorderScreen
 import io.github.kurohi.akachannoise.ui.settings.AboutScreen
+import io.github.kurohi.akachannoise.ui.settings.CryTestScreen
 import io.github.kurohi.akachannoise.ui.settings.PrivacyScreen
 import io.github.kurohi.akachannoise.ui.settings.SafetyScreen
 import io.github.kurohi.akachannoise.ui.settings.SettingsScreen
@@ -144,9 +146,11 @@ fun AkachanNoiseApp(
                 onOpenSafety = { backStack.add(SafetyKey) },
                 onOpenPrivacy = { backStack.add(PrivacyKey) },
                 onOpenAbout = { backStack.add(OnboardingKey) },
+                onOpenCryTest = { backStack.add(CryTestKey) },
                 onMessage = { message -> scope.launch { snackbarHostState.showSnackbar(message) } },
             )
         }
+        entry(CryTestKey) { CryTestScreen(container = container, onBack = { backStack.removeLastOrNull() }) }
         entry(SafetyKey) { SafetyScreen(onBack = { backStack.removeLastOrNull() }) }
         entry(PrivacyKey) { PrivacyScreen(onBack = { backStack.removeLastOrNull() }) }
         entry(OnboardingKey) {

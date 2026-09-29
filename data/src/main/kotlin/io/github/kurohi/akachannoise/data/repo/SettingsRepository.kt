@@ -38,5 +38,9 @@ class SettingsRepository(
 
     suspend fun setCrySensitivity(value: Float) = update { it.copy(crySensitivity = value.coerceIn(0f, 1f)) }
 
+    suspend fun setCryWindowHours(hours: Int) = update { it.copy(cryWindowHours = hours.coerceIn(1, 12)) }
+
+    suspend fun setCryRestartMinutes(minutes: Int) = update { it.copy(cryRestartMinutes = minutes.coerceIn(1, 60)) }
+
     suspend fun setOnboardingDone(done: Boolean) = update { it.copy(onboardingDone = done) }
 }

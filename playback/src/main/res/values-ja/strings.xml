@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cry_channel_name">泣き声で再開</string>
+    <string name="cry_channel_description">タイマー終了後に泣き声を聞き取ります</string>
+    <string name="cry_notification_title">泣き声で再開</string>
+    <string name="cry_notification_armed">タイマーが終わったら聞き取りを始めます</string>
+    <string name="cry_notification_listening">泣き声を聞き取り中 · %1$s まで</string>
+    <string name="cry_action_stop">聞き取りを止める</string>
+    <string name="cry_action_play_now">今すぐ再生</string>
+</resources>

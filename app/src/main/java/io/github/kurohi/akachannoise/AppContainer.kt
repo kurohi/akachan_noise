@@ -1,7 +1,10 @@
 package io.github.kurohi.akachannoise
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import io.github.kurohi.akachannoise.data.repo.CustomSoundRepository
@@ -66,6 +69,23 @@ class AppContainer(context: Context) {
                 customSounds.createGenerator(soundId, context, params)
             },
         )
+
+        // Keep the cry monitor configured from settings; the feature needs
+        // the microphone permission, so it stays off until that is granted.
+        scope.launch {
+            settingsRepository.settings.collect { settings ->
+                val granted = ContextCompat.checkSelfPermission(
+                    appContext,
+                    Manifest.permission.RECORD_AUDIO,
+                ) == PackageManager.PERMISSION_GRANTED
+                playback.configureCryRestart(
+                    enabled = settings.cryRestartEnabled && granted,
+                    sensitivity = settings.crySensitivity,
+                    windowMinutes = settings.cryWindowHours * 60,
+                    playMinutes = settings.cryRestartMinutes,
+                )
+            }
+        }
 
         scope.launch {
             val token = SessionToken(

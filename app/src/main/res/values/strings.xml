@@ -205,8 +205,7 @@
     <string name="settings_dynamic_color_hint">Use the colours from your wallpaper (Android 12+).</string>
     <string name="settings_volume_cap">Volume limit</string>
     <string name="settings_volume_cap_hint">Caps how loud the app can get. Lower is safer for small ears.</string>
-    <string name="settings_data">Your data</string>
-    <string name="settings_export">Export mixes</string>
+    <string name="settings_data">Your data</string>    <string name="settings_export">Export mixes</string>
     <string name="settings_export_hint">Save a file with your mixes and settings. Nothing is uploaded.</string>
     <string name="settings_import">Import mixes</string>
     <string name="settings_import_hint">Restore a file you exported earlier.</string>
@@ -225,6 +224,30 @@
     <string name="settings_version">Version %1$s</string>
     <string name="settings_license">GNU GPL-3.0 — free and open source</string>
     <string name="settings_source">Source code</string>
+
+    <!-- Cry-activated restart -->
+    <string name="settings_cry">Cry-activated restart</string>
+    <string name="settings_cry_hint">After the sleep timer ends, listen on this device and start the last mix again if your baby cries. Nothing is recorded, and nothing is uploaded — the analysis happens in memory.</string>
+    <string name="settings_cry_enable">Listen for crying</string>
+    <string name="settings_cry_sensitivity">Sensitivity</string>
+    <string name="settings_cry_sensitivity_hint">Higher catches quieter cries, but may also react to other sounds.</string>
+    <string name="settings_cry_window">Keep listening for</string>
+    <string name="settings_cry_play_minutes">Play again for</string>
+    <string name="settings_cry_test">Test listening</string>
+    <string name="settings_cry_test_hint">Check that it hears a cry in your room</string>
+    <string name="cry_hours">%1$d h</string>
+    <string name="cry_minutes">%1$d min</string>
+    <string name="cry_test_title">Test listening</string>
+    <string name="cry_test_body">Make a crying sound, or play a recording of one. The meter shows what the microphone hears; nothing is saved.</string>
+    <string name="cry_test_level">Microphone level</string>
+    <string name="cry_test_pitch">Pitch %1$d Hz</string>
+    <string name="cry_test_no_pitch">No clear pitch</string>
+    <string name="cry_test_detected">Cry detected — the mix would start again</string>
+    <string name="cry_test_listening">Listening…</string>
+    <string name="cry_test_stop">Stop</string>
+    <string name="cry_test_needs_permission">The microphone permission is needed for this feature.</string>
+    <string name="cry_test_grant">Allow microphone</string>
+    <string name="cry_test_denied">The feature stays off without the microphone permission.</string>
 
     <!-- Onboarding -->
     <string name="onboarding_private_title">Nothing leaves this phone</string>

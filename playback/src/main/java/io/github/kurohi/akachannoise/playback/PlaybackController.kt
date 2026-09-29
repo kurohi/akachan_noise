@@ -74,6 +74,14 @@ class PlaybackController private constructor(context: Context) {
     private var pausedByFocus = false
     private var duckedByFocus = false
 
+    @Volatile private var cryRestartEnabled = false
+
+    @Volatile private var crySensitivity = 0.5f
+
+    @Volatile private var cryWindowMinutes = 240
+
+    @Volatile private var cryPlayMinutes = 10
+
     /** True once [shutdown] has run; used by [get] to recreate the singleton. */
     @Volatile private var isShutdown = false
 
@@ -113,7 +121,11 @@ class PlaybackController private constructor(context: Context) {
      * Starts playback of [mix] (or the last prepared mix), fading in.
      * Called by NoisePlayer when the session goes to playWhenReady.
      */
-    fun play(mix: MixSpec? = null, fadeInMs: Int = FADE_IN_MS) {
+    fun play(
+        mix: MixSpec? = null,
+        fadeInMs: Int = FADE_IN_MS,
+        useDefaultTimer: Boolean = true,
+    ) {
         val target = mix ?: lastMix ?: return
         prepare(target)
         requestFocus()
@@ -125,7 +137,17 @@ class PlaybackController private constructor(context: Context) {
         }
         renderThread.requestRender()
         _state.value = _state.value.copy(playing = true, currentMix = target)
-        startStepDownIfEnabled()
+        if (useDefaultTimer) startStepDownIfEnabled()
+        // The microphone foreground service may only start while the app is
+        // visible, so arm the cry monitor here rather than hours later.
+        if (cryRestartEnabled) {
+            CryMonitorService.arm(
+                appContext,
+                windowMinutes = cryWindowMinutes,
+                sensitivity = crySensitivity,
+                playMinutes = cryPlayMinutes,
+            )
+        }
     }
 
     /** Crossfades to [mix] while playing. */
@@ -148,6 +170,8 @@ class PlaybackController private constructor(context: Context) {
             abandonFocus()
             unregisterNoisyReceiver()
             cancelTimer()
+            // A deliberate pause also ends cry listening.
+            CryMonitorService.stop(appContext)
         }
     }
 
@@ -177,6 +201,47 @@ class PlaybackController private constructor(context: Context) {
     /** Lets the app play user-imported and recorded sounds. */
     fun setCustomSoundResolver(resolver: CustomSoundResolver?) {
         customSoundResolver = resolver
+    }
+
+    // ---- Cry-activated restart ---------------------------------------------
+
+    /**
+     * Enables the opt-in cry monitor. Nothing is recorded or uploaded: the
+     * microphone feed is analysed frame by frame in memory.
+     */
+    fun configureCryRestart(
+        enabled: Boolean,
+        sensitivity: Float,
+        windowMinutes: Int,
+        playMinutes: Int,
+    ) {
+        cryRestartEnabled = enabled
+        crySensitivity = sensitivity.coerceIn(0f, 1f)
+        cryWindowMinutes = windowMinutes.coerceAtLeast(1)
+        cryPlayMinutes = playMinutes.coerceAtLeast(1)
+        if (!enabled) CryMonitorService.stop(appContext)
+    }
+
+    val isCryRestartEnabled: Boolean get() = cryRestartEnabled
+
+    /**
+     * Called by the monitor when it hears a cry: brings the last mix back
+     * slowly, then hands control back to the timer.
+     */
+    fun restartFromCry(playMinutes: Int) {
+        val target = lastMix ?: return
+        if (_state.value.playing) return
+        play(target, fadeInMs = CRY_FADE_IN_MS, useDefaultTimer = false)
+        setTimer(
+            durationMs = playMinutes * 60_000L,
+            fadeOutMs = CRY_FADE_OUT_MS,
+            stepDown = false,
+        )
+    }
+
+    /** The listening window ended (or the user stopped it). */
+    fun onCryMonitoringStopped() {
+        // Nothing to do beyond letting the mix finish its own timer.
     }
 
     // ---- Sleep timer --------------------------------------------------------
@@ -231,6 +296,9 @@ class PlaybackController private constructor(context: Context) {
         )
         abandonFocus()
         unregisterNoisyReceiver()
+        // The night's sound has faded out; start listening if the user
+        // opted into cry-activated restart.
+        if (cryRestartEnabled) CryMonitorService.startListening(appContext)
     }
 
     private fun startStepDownIfEnabled() {
@@ -332,6 +400,10 @@ class PlaybackController private constructor(context: Context) {
         const val STEP_DOWN_TARGET_VOLUME = 0.5f
         const val DUCK_VOLUME = 0.2f
         const val DUCK_FADE_MS = 300
+
+        /** Cries get a long, gentle fade-in so nobody is startled. */
+        const val CRY_FADE_IN_MS = 20_000
+        const val CRY_FADE_OUT_MS = 15_000
 
         @Volatile private var instance: PlaybackController? = null
 

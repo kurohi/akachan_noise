@@ -21,6 +21,9 @@ data object SettingsKey : NavKey
 data object RecorderKey : NavKey
 
 @Serializable
+data object CryTestKey : NavKey
+
+@Serializable
 data object SleepKey : NavKey
 
 @Serializable

@@ -3,8 +3,13 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Optional: the cry monitor and the recorder. Requested only in
+         context, when the user turns a microphone feature on. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application>
         <service
@@ -16,6 +21,13 @@
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+
+        <!-- Only ever started from the visible app, and the microphone is
+             only opened once the sleep timer ends. -->
+        <service
+            android:name="io.github.kurohi.akachannoise.playback.CryMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
     </application>
 
 </manifest>

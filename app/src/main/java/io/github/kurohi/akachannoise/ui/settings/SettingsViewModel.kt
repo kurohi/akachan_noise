@@ -31,6 +31,14 @@ class SettingsViewModel(
 
     fun setMono(mono: Boolean) = update { settings.setMono(mono) }
 
+    fun setCryRestartEnabled(enabled: Boolean) = update { settings.setCryRestartEnabled(enabled) }
+
+    fun setCrySensitivity(value: Float) = update { settings.setCrySensitivity(value) }
+
+    fun setCryWindowHours(hours: Int) = update { settings.setCryWindowHours(hours) }
+
+    fun setCryRestartMinutes(minutes: Int) = update { settings.setCryRestartMinutes(minutes) }
+
     /** Serializes everything for a manual backup file. */
     fun exportBackup(): String = MixCodec.encodeBackup(mixes.data.value)
 

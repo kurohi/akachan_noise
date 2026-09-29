@@ -1,7 +1,9 @@
 package io.github.kurohi.akachannoise.ui.settings
 
+import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +46,7 @@ import io.github.kurohi.akachannoise.AppContainer
 import io.github.kurohi.akachannoise.BuildConfig
 import io.github.kurohi.akachannoise.R
 import io.github.kurohi.akachannoise.data.model.ThemeMode
+import io.github.kurohi.akachannoise.playback.CryListener
 import io.github.kurohi.akachannoise.ui.components.SectionTitle
 import kotlin.math.roundToInt
 
@@ -55,6 +58,7 @@ fun SettingsScreen(
     onOpenSafety: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenAbout: () -> Unit,
+    onOpenCryTest: () -> Unit,
     onMessage: (String) -> Unit,
 ) {
     val vm: SettingsViewModel = viewModel(
@@ -63,6 +67,15 @@ fun SettingsScreen(
     val settings by vm.appSettings.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var confirmDelete by remember { mutableStateOf(false) }
+    var micGranted by remember { mutableStateOf(CryListener.hasPermission(context)) }
+
+    val deniedMessage = stringResource(R.string.cry_test_denied)
+    val micLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        micGranted = granted
+        if (granted) vm.setCryRestartEnabled(true) else onMessage(deniedMessage)
+    }
 
     val exportedMessage = stringResource(R.string.settings_exported)
     val importedMessage = stringResource(R.string.settings_imported)
@@ -211,6 +224,56 @@ fun SettingsScreen(
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            SectionTitle(stringResource(R.string.settings_cry))
+
+            SettingSwitch(
+                title = stringResource(R.string.settings_cry_enable),
+                hint = stringResource(R.string.settings_cry_hint),
+                checked = settings.cryRestartEnabled && micGranted,
+                onCheckedChange = { enabled ->
+                    if (enabled && !micGranted) {
+                        micLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        vm.setCryRestartEnabled(enabled)
+                    }
+                },
+            )
+
+            if (settings.cryRestartEnabled && micGranted) {
+                SettingSlider(
+                    title = stringResource(R.string.settings_cry_sensitivity),
+                    hint = stringResource(R.string.settings_cry_sensitivity_hint),
+                    value = settings.crySensitivity,
+                    valueRange = 0f..1f,
+                    valueLabel = "${(settings.crySensitivity * 100).roundToInt()}%",
+                    onValueChange = vm::setCrySensitivity,
+                )
+                SettingSlider(
+                    title = stringResource(R.string.settings_cry_window),
+                    hint = null,
+                    value = settings.cryWindowHours.toFloat(),
+                    valueRange = 1f..12f,
+                    steps = 10,
+                    valueLabel = stringResource(R.string.cry_hours, settings.cryWindowHours),
+                    onValueChange = { vm.setCryWindowHours(it.roundToInt()) },
+                )
+                SettingSlider(
+                    title = stringResource(R.string.settings_cry_play_minutes),
+                    hint = null,
+                    value = settings.cryRestartMinutes.toFloat(),
+                    valueRange = 1f..60f,
+                    steps = 11,
+                    valueLabel = stringResource(R.string.cry_minutes, settings.cryRestartMinutes),
+                    onValueChange = { vm.setCryRestartMinutes(it.roundToInt()) },
+                )
+                SettingClick(
+                    title = stringResource(R.string.settings_cry_test),
+                    hint = stringResource(R.string.settings_cry_test_hint),
+                    onClick = onOpenCryTest,
+                )
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
             SectionTitle(stringResource(R.string.settings_data))
 
             SettingClick(
@@ -346,7 +409,8 @@ private fun SettingClick(title: String, hint: String?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -359,12 +423,10 @@ private fun SettingClick(title: String, hint: String?, onClick: () -> Unit) {
                 )
             }
         }
-        TextButton(onClick = onClick) {
-            Icon(
-                Icons.Filled.ChevronRight,
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Icon(
+            Icons.Filled.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
