@@ -1,10 +1,12 @@
 package io.github.kurohi.akachannoise.data.audio
 
 import android.content.Context
+import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
+import android.os.Build
 import io.github.kurohi.akachannoise.data.model.CustomSoundRef
 import java.io.File
 import java.io.RandomAccessFile
@@ -140,11 +142,7 @@ class AudioImporter(private val context: Context) {
                     else -> {
                         if (outputIndex >= 0) {
                             val buffer = codec.getOutputBuffer(outputIndex)!!
-                            val encoding = codec.outputFormat
-                                .getInteger(
-                                    MediaFormat.KEY_PCM_ENCODING,
-                                    android.media.AudioFormat.ENCODING_PCM_16BIT,
-                                )
+                            val encoding = outputPcmEncoding(codec.outputFormat)
                             written = appendSamples(
                                 buffer,
                                 info,
@@ -171,6 +169,18 @@ class AudioImporter(private val context: Context) {
         }
     }
 
+    /**
+     * Decoders report their PCM encoding through [MediaFormat.KEY_PCM_ENCODING],
+     * but the defaulting overload of [MediaFormat.getInteger] only exists from
+     * API 29 — on API 26-28 decoders output 16-bit PCM anyway.
+     */
+    private fun outputPcmEncoding(format: MediaFormat): Int {
+        if (Build.VERSION.SDK_INT < 29) return AudioFormat.ENCODING_PCM_16BIT
+        return runCatching {
+            format.getInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
+        }.getOrDefault(AudioFormat.ENCODING_PCM_16BIT)
+    }
+
     private fun appendSamples(
         buffer: ByteBuffer,
         info: MediaCodec.BufferInfo,
@@ -183,7 +193,7 @@ class AudioImporter(private val context: Context) {
         buffer.limit(info.offset + info.size)
         var index = written
         when (encoding) {
-            android.media.AudioFormat.ENCODING_PCM_FLOAT -> {
+            AudioFormat.ENCODING_PCM_FLOAT -> {
                 val floats = buffer.order(ByteOrder.nativeOrder()).asFloatBuffer()
                 while (floats.hasRemaining() && index < out.size) {
                     out[index++] = floats.get()

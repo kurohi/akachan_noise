@@ -96,7 +96,9 @@ fun AkachanNoiseApp(
     }
 
     fun selectTab(key: NavKey) {
-        while (backStack.size > 1) backStack.removeLast()
+        // removeLast() would resolve to the Java 21 List method on API 35+
+        // and crash on older devices; removeAt is safe everywhere.
+        while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
         if (backStack.last() != key) backStack.add(key)
     }
 

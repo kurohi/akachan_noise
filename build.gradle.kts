@@ -33,7 +33,9 @@ spotless {
         endWithNewline()
     }
     format("misc") {
-        target("**/*.md", ".gitignore")
+        // Anchored to real source locations: a broad `**/*` pattern makes
+        // Spotless walk build directories that other tasks rewrite.
+        target("*.md", ".gitignore")
         targetExclude("**/build/**")
         trimTrailingWhitespace()
         endWithNewline()
