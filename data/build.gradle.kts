@@ -21,6 +21,7 @@ dependencies {
     api(project(":engine"))
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.datastore)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
