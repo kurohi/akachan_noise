@@ -1,0 +1,13 @@
+First release.
+
+- Sixteen sounds synthesised on the phone: heartbeat, blood flow, womb ambience, white/pink/brown noise, ocean, rain, stream, wind, fan, hair dryer, vacuum, car ride, plastic bag and shush
+- Nine ready-to-play presets, and up to eight sounds per mix
+- Save, rename, duplicate, favourite and reorder your own mixes
+- Share a mix as a short text code (no server involved)
+- Import your own audio or record a sound, with an optional womb filter
+- Sleep timer with fade-out and Soothe to Settle
+- Night-red sleep screen with a countdown ring and touch lock
+- Home-screen widget, Quick Settings tile and launcher shortcuts
+- Cry-activated restart (opt-in, on-device only)
+- English and Japanese
+- No internet permission, no ads, no tracking

@@ -51,6 +51,20 @@ Requirements: JDK 17+ and the Android SDK (API 37).
 `local.properties` must point at your SDK:
 `sdk.dir=/path/to/Android/Sdk`
 
+## Releasing
+
+The app is built and signed by F-Droid from this source, and released on
+GitHub as well. Before tagging, build the minified release and smoke-test it
+(R8 is where release-only crashes hide):
+
+```bash
+./gradlew :app:assembleRelease
+# sign with a throwaway key, install, then check that it launches, plays,
+# and opens an akachannoise://mix?d=... share link
+```
+
+Store metadata and screenshots live in `fastlane/metadata/android/`.
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE). Sound synthesis is written from

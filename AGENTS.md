@@ -26,6 +26,36 @@ The `:app:checkMergedPermissions` task enforces the permission allowlist.
 ./gradlew :engine:renderSamples              # WAVs of every sound in engine/build/samples
 ```
 
+## Before pushing
+
+Run the same three steps CI runs, in the same order (running them in one
+Gradle invocation lets Spotless race with tasks that rewrite `build/`):
+
+```bash
+./gradlew spotlessCheck
+./gradlew build lint
+./gradlew :app:assembleDebug :app:checkMergedPermissions
+```
+
+`lint` matters: it catches API-level mistakes the emulator cannot (for
+example `MediaFormat.getInteger(key, default)` needs API 29, and
+`List.removeLast()` resolves to a Java 21 method that does not exist below
+API 35).
+
+## Release builds
+
+R8 is where release-only crashes hide, so always smoke-test the minified
+build before tagging:
+
+```bash
+./gradlew :app:assembleRelease
+# sign with a throwaway key, install, then: launch, play, and open a
+# akachannoise://mix?d=... share link (that exercises kotlinx.serialization)
+```
+
+Keep rules live in `app/proguard-rules.pro`. Room/WorkManager (via Glance)
+and kotlinx.serialization both look classes up by name at runtime.
+
 Emulator: `~/Android/Sdk/emulator/emulator -avd akachan_api37`
 List devices: `adb devices -l`
 

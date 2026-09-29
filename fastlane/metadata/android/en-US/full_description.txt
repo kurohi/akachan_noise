@@ -1,0 +1,30 @@
+Akachan Noise helps babies sleep with the sounds they already know: a mother's heartbeat, the blood flow of the womb, and gentle white noise. Built for parents, not for profit.
+
+PRIVATE BY CONSTRUCTION
+The app has no internet permission at all, so it cannot send your data anywhere. There are no ads, no analytics, no accounts and no third-party trackers. A build-time check fails if any of that ever changes. Your mixes, favourites and recordings stay on your device; cloud backup is off, and you can export a file yourself whenever you want a copy.
+
+SOUNDS THAT GROW WITH YOUR BABY
+Every built-in sound is synthesised in real time on the phone, so nothing is downloaded and nothing loops with a seam:
+- Womb: heartbeat (adjustable 50-120 bpm), blood-flow whoosh in time with it, and a deep womb ambience
+- Noise: white, pink and brown, with a continuous colour slider
+- Nature: ocean waves, rain, stream and wind
+- Home: fan, hair dryer, vacuum, car ride and plastic-bag rustle (a well-known Japanese calming trick)
+- Voice-like: shush, continuous or with a slow or fast rhythm
+
+MIX AND KEEP WHAT WORKS
+Blend up to eight sounds, tune each one (heart rate, wave length, rain density, fan speed and more), save your mixes with a name, mark favourites, and reorder or duplicate them. Share a mix with another parent as a short text code - it contains only the mix, no personal data.
+
+GENTLE BY DESIGN
+Every change fades: layers come in and out over about a second, switching mixes crossfades, and pausing fades out. A master limiter keeps things from ever clipping. The sleep timer is on by default, and "Soothe to Settle" plays a little louder while your baby is settling, then glides down to half volume.
+
+MADE FOR 3 AM
+A true-black night-red sleep screen with a countdown ring and a touch lock, so a curious hand cannot change anything. Big controls in the thumb zone, a home-screen widget, a Quick Settings tile and launcher shortcuts for your favourite mixes. English and Japanese.
+
+YOUR OWN SOUNDS
+Import an audio file or record your voice or a shush in the app, then muffle it with the "womb filter" so it sounds the way your baby heard it from inside. The microphone is only used when you start recording or turn on cry-activated restart, and it is always analysed on the device - never recorded, never uploaded.
+
+SAFE USE
+Sound machines should be placed as far from your baby as practical and played at the lowest volume that works, with the timer ending the night. The app gives guidance, but phones cannot measure how loud the sound really is in the room: trust your ears and your health visitor's advice. Akachan Noise is not a medical device or a baby monitor.
+
+FREE AND OPEN SOURCE
+Licensed under the GNU GPL-3.0. No ads, no in-app purchases, no "pro" tier - ever.
