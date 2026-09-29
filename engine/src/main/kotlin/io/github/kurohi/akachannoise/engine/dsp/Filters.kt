@@ -151,6 +151,15 @@ class Svf {
         return low
     }
 
+    /** Same update as [process], returning the band-pass output. */
+    fun bandPass(x: Float, cutoffHz: Float, sampleRate: Int, q: Float = 1f): Float {
+        val f = 2.0 * PI * cutoffHz / sampleRate
+        low += (f * band).toFloat()
+        val high = x - low - q * band
+        band += (f * high).toFloat()
+        return band
+    }
+
     fun high(x: Float, cutoffHz: Float, sampleRate: Int, q: Float = 1f): Float = x - process(x, cutoffHz, sampleRate, q)
 
     fun reset() {

@@ -1,20 +1,21 @@
 package io.github.kurohi.akachannoise.engine.tools
 
+import io.github.kurohi.akachannoise.engine.model.BuiltInPresets
 import io.github.kurohi.akachannoise.engine.model.LayerSpec
 import io.github.kurohi.akachannoise.engine.model.MixSpec
 import io.github.kurohi.akachannoise.engine.model.SoundCatalog
 import java.io.File
 
 /**
- * Renders every built-in sound to WAV files for desktop listening.
+ * Renders every built-in sound and preset to WAV files for desktop listening.
  * Invoked by the `:engine:renderSamples` Gradle task; output lands in
  * engine/build/samples.
  */
 fun main() {
     val outDir = File(System.getProperty("user.dir")).apply { mkdirs() }
-    val seconds = 10.0
 
     SoundCatalog.specs.forEach { spec ->
+        val seconds = if (spec.calibrationSeconds > 5.0) 20.0 else 10.0
         val mix = MixSpec(
             id = "preview-${spec.id.id}",
             name = spec.id.id,
@@ -30,5 +31,14 @@ fun main() {
         OfflineRender.renderToFile(file, mix, seconds)
         println("rendered ${file.absolutePath} (${spec.id})")
     }
-    println("renderSamples: done (${SoundCatalog.specs.size} sound(s))")
+
+    BuiltInPresets.presets.forEach { preset ->
+        val file = File(outDir, "${preset.id.replace('.', '_')}.wav")
+        OfflineRender.renderToFile(file, preset, 20.0)
+        println("rendered ${file.absolutePath} (${preset.id})")
+    }
+    println(
+        "renderSamples: done (${SoundCatalog.specs.size} sound(s), " +
+            "${BuiltInPresets.presets.size} preset(s))",
+    )
 }

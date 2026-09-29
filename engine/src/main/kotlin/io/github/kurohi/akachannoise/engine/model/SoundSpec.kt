@@ -50,11 +50,14 @@ class EngineContext(
 
 /**
  * Describes one built-in sound: identity, category, tunable parameters and a
- * factory that creates the real-time generator.
+ * factory that creates the real-time generator. [calibrationSeconds] is the
+ * window used to measure the generator's loudness at construction (0 = the
+ * generator calibrates itself); slow, swaying sounds need longer windows.
  */
 class SoundSpec(
     val id: SoundId,
     val category: SoundCategory,
     val params: List<ParamSpec>,
     val factory: (EngineContext) -> SoundGenerator,
+    val calibrationSeconds: Double = 2.0,
 )

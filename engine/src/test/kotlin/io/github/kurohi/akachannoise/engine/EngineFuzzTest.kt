@@ -1,5 +1,6 @@
 package io.github.kurohi.akachannoise.engine
 
+import io.github.kurohi.akachannoise.engine.dsp.lerp
 import io.github.kurohi.akachannoise.engine.model.LayerSpec
 import io.github.kurohi.akachannoise.engine.model.MixSpec
 import io.github.kurohi.akachannoise.engine.model.SoundCatalog
@@ -20,7 +21,7 @@ class EngineFuzzTest {
 
     @Test
     fun `random operation stream stays finite and bounded`() {
-        val random = Random(20260926)
+        val random = Random(20260927)
         val engine = NoiseEngine(sampleRate, seed = 99)
         val buffer = FloatArray(block * 2)
         val soundIds = SoundCatalog.specs.map { it.id.id }
@@ -31,14 +32,14 @@ class EngineFuzzTest {
             return MixSpec(
                 id = "fuzz",
                 name = "fuzz",
-                layers = chosen.map {
+                layers = chosen.map { id ->
+                    val spec = SoundCatalog.specFor(id)!!
                     LayerSpec(
-                        soundId = it,
+                        soundId = id,
                         volume = random.nextFloat(),
-                        params = mapOf(
-                            "color" to random.nextFloat(),
-                            "width" to random.nextFloat(),
-                        ),
+                        params = spec.params.associate { p ->
+                            p.id to lerp(p.min, p.max, random.nextFloat())
+                        },
                     )
                 },
                 masterVolume = random.nextFloat(),
@@ -50,7 +51,7 @@ class EngineFuzzTest {
         engine.start(randomMix(), fadeInMs = 0)
         val totalBlocks = 60 * sampleRate / block
         for (blockIndex in 0 until totalBlocks) {
-            when (random.nextInt(20)) {
+            when (random.nextInt(50)) {
                 0 -> engine.switchTo(randomMix(), crossfadeMs = random.nextInt(0, 3000))
 
                 1 -> engine.setMasterVolume(random.nextFloat())
@@ -61,8 +62,10 @@ class EngineFuzzTest {
                     engine.setLayerVolume(it, random.nextFloat())
                 }
 
-                4 -> soundIds.random(random).let {
-                    engine.setLayerParam(it, "color", random.nextFloat())
+                4 -> soundIds.random(random).let { id ->
+                    val spec = SoundCatalog.specFor(id) ?: return@let
+                    val param = spec.params.randomOrNull(random) ?: return@let
+                    engine.setLayerParam(id, param.id, lerp(param.min, param.max, random.nextFloat()))
                 }
 
                 5 -> engine.setWarmth(random.nextFloat())
