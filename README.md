@@ -11,7 +11,8 @@ Built for parents, not for profit.
 - **Private by construction.** The app has no `INTERNET` permission, so it
   physically cannot send your data anywhere. No analytics, no ads, no
   accounts, no tracking. A build check enforces this.
-- **Free forever.** Licensed under the GNU GPL-3.0. Source on GitHub,
+- **Free forever.** Licensed under the GNU GPL-3.0. Source at
+  [github.com/kurohi/akachan_noise](https://github.com/kurohi/akachan_noise),
   releases on GitHub and F-Droid.
 - **Calm and safe.** Every sound change fades gently. The sleep timer is on
   by default, and a "soothe → settle" mode lowers the volume once your baby

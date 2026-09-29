@@ -166,4 +166,4 @@ fun AboutScreen(onBack: () -> Unit, onShowOnboarding: () -> Unit) {
     }
 }
 
-private const val SOURCE_URL = "https://github.com/kurohi/akachan-noise"
+private const val SOURCE_URL = "https://github.com/kurohi/akachan_noise"
