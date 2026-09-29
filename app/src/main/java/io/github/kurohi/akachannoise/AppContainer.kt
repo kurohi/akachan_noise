@@ -18,6 +18,8 @@ import io.github.kurohi.akachannoise.engine.CustomSoundResolver
 import io.github.kurohi.akachannoise.playback.PlaybackController
 import io.github.kurohi.akachannoise.playback.PlaybackService
 import io.github.kurohi.akachannoise.ui.mix.MixEditor
+import io.github.kurohi.akachannoise.ui.widget.NoiseWidget
+import io.github.kurohi.akachannoise.ui.widget.ShortcutsPublisher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -85,6 +87,17 @@ class AppContainer(context: Context) {
                     playMinutes = settings.cryRestartMinutes,
                 )
             }
+        }
+
+        // Keep the home-screen widget and the launcher shortcuts in step with
+        // what the app is doing.
+        scope.launch {
+            mixRepository.favoriteMixes.collect { favorites ->
+                ShortcutsPublisher.update(appContext, favorites)
+            }
+        }
+        scope.launch {
+            playback.state.collect { NoiseWidget.refresh(appContext) }
         }
 
         scope.launch {

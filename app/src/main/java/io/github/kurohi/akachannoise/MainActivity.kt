@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var container: AppContainer
     private var sharedMix by mutableStateOf<MixSpec?>(null)
+    private var pendingPlayMixId by mutableStateOf<String?>(null)
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -34,8 +35,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        container = AppContainer(this)
+        container = AppGraph.get(this)
         sharedMix = parseShareIntent(intent)
+        pendingPlayMixId = intent?.getStringExtra(EXTRA_PLAY_MIX_ID)
 
         setContent {
             val settings by container.settingsRepository.settings.collectAsStateWithLifecycle()
@@ -54,6 +56,19 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(settings.onboardingDone) {
                 if (settings.onboardingDone) requestNotificationPermissionIfNeeded()
             }
+
+            // Widgets, tiles and shortcuts can ask us to start a mix.
+            LaunchedEffect(pendingPlayMixId) {
+                val id = pendingPlayMixId ?: return@LaunchedEffect
+                pendingPlayMixId = null
+                container.mixRepository.mixById(id)?.let { container.mixEditor.playMix(it) }
+            }
+            LaunchedEffect(intent?.action) {
+                if (intent?.action == ACTION_PLAY) {
+                    setIntent(intent.apply { action = null })
+                    container.mixEditor.play()
+                }
+            }
         }
     }
 
@@ -61,6 +76,15 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         parseShareIntent(intent)?.let { sharedMix = it }
+        intent.getStringExtra(EXTRA_PLAY_MIX_ID)?.let { pendingPlayMixId = it }
+    }
+
+    companion object {
+        /** Tile tap on Android 14+: the app opens and starts playing. */
+        const val ACTION_PLAY = "io.github.kurohi.akachannoise.action.PLAY"
+
+        /** Shortcut extra: start this saved mix straight away. */
+        const val EXTRA_PLAY_MIX_ID = "play_mix_id"
     }
 
     private fun parseShareIntent(intent: Intent?): MixSpec? {

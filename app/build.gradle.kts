@@ -67,6 +67,9 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.common)
 
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
@@ -90,6 +93,9 @@ val allowedPermissions = setOf(
     "android.permission.RECORD_AUDIO",
     "android.permission.POST_NOTIFICATIONS",
     "android.permission.WAKE_LOCK",
+    // Added by Glance so home-screen widgets refresh after a reboot. It only
+    // tells the app that the device booted; it cannot read or send anything.
+    "android.permission.RECEIVE_BOOT_COMPLETED",
     "io.github.kurohi.akachannoise.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
 )
 tasks.register("checkMergedPermissions") {

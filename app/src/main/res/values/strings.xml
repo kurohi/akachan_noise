@@ -249,6 +249,11 @@
     <string name="cry_test_grant">Allow microphone</string>
     <string name="cry_test_denied">The feature stays off without the microphone permission.</string>
 
+    <!-- Widget -->
+    <string name="widget_description">Play or pause your white noise, and start a favourite</string>
+    <string name="widget_play">Play</string>
+    <string name="widget_pause">Pause</string>
+
     <!-- Onboarding -->
     <string name="onboarding_private_title">Nothing leaves this phone</string>
     <string name="onboarding_private_body">Akachan Noise has no internet permission at all. No accounts, no ads, no analytics — your mixes and recordings stay on your device.</string>

@@ -57,17 +57,23 @@ fun categoryLabel(category: SoundCategory): String = when (category) {
  * keep the name they typed.
  */
 @Composable
-fun mixDisplayName(id: String, fallback: String): String = when (id) {
-    "preset.womb" -> stringResource(R.string.preset_womb)
-    "preset.womb_ocean" -> stringResource(R.string.preset_womb_ocean)
-    "preset.tv_static" -> stringResource(R.string.preset_tv_static)
-    "preset.pink_rain" -> stringResource(R.string.preset_pink_rain)
-    "preset.car_ride" -> stringResource(R.string.preset_car_ride)
-    "preset.shush" -> stringResource(R.string.preset_shush)
-    "preset.fan_brown" -> stringResource(R.string.preset_fan_brown)
-    "preset.hair_dryer" -> stringResource(R.string.preset_hair_dryer)
-    "preset.deep_brown" -> stringResource(R.string.preset_deep_brown)
-    else -> fallback
+fun mixDisplayName(id: String, fallback: String): String = presetNameRes(id)?.let { stringResource(it) } ?: fallback
+
+/** Non-composable variant for widgets, tiles and shortcuts. */
+fun mixDisplayNameFor(context: android.content.Context, id: String, fallback: String): String = presetNameRes(id)?.let { context.getString(it) } ?: fallback
+
+@androidx.annotation.StringRes
+private fun presetNameRes(id: String): Int? = when (id) {
+    "preset.womb" -> R.string.preset_womb
+    "preset.womb_ocean" -> R.string.preset_womb_ocean
+    "preset.tv_static" -> R.string.preset_tv_static
+    "preset.pink_rain" -> R.string.preset_pink_rain
+    "preset.car_ride" -> R.string.preset_car_ride
+    "preset.shush" -> R.string.preset_shush
+    "preset.fan_brown" -> R.string.preset_fan_brown
+    "preset.hair_dryer" -> R.string.preset_hair_dryer
+    "preset.deep_brown" -> R.string.preset_deep_brown
+    else -> null
 }
 
 /** Localized parameter name. */

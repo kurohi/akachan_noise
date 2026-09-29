@@ -249,6 +249,11 @@
     <string name="cry_test_grant">マイクを許可</string>
     <string name="cry_test_denied">マイクの権限がないとこの機能はオフのままです。</string>
 
+    <!-- Widget -->
+    <string name="widget_description">ホワイトノイズの再生・停止と、お気に入りの再生</string>
+    <string name="widget_play">再生</string>
+    <string name="widget_pause">一時停止</string>
+
     <!-- Onboarding -->
     <string name="onboarding_private_title">データは端末の外に出ません</string>
     <string name="onboarding_private_body">あかちゃんノイズはインターネットの権限を一切持ちません。アカウントも広告も解析もなく、ミックスや録音は端末の中だけに保存されます。</string>
