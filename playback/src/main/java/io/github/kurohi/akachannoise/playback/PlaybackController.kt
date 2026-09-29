@@ -170,8 +170,9 @@ class PlaybackController private constructor(context: Context) {
             abandonFocus()
             unregisterNoisyReceiver()
             cancelTimer()
-            // A deliberate pause also ends cry listening.
-            CryMonitorService.stop(appContext)
+            // A deliberate pause also ends cry listening, but only bother if
+            // the feature is on (otherwise this would spawn the service).
+            if (cryRestartEnabled) CryMonitorService.stop(appContext)
         }
     }
 
@@ -215,11 +216,14 @@ class PlaybackController private constructor(context: Context) {
         windowMinutes: Int,
         playMinutes: Int,
     ) {
+        val wasEnabled = cryRestartEnabled
         cryRestartEnabled = enabled
         crySensitivity = sensitivity.coerceIn(0f, 1f)
         cryWindowMinutes = windowMinutes.coerceAtLeast(1)
         cryPlayMinutes = playMinutes.coerceAtLeast(1)
-        if (!enabled) CryMonitorService.stop(appContext)
+        // Only tear the monitor down on the enabled -> disabled transition,
+        // so ordinary settings changes do not poke the service.
+        if (!enabled && wasEnabled) CryMonitorService.stop(appContext)
     }
 
     val isCryRestartEnabled: Boolean get() = cryRestartEnabled

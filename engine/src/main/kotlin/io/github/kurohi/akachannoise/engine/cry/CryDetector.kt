@@ -94,6 +94,7 @@ class CryDetector(
         quietRun = 0
         cooldown = 0
         frameIsCry = false
+        frameIsCryPrevious = false
     }
 
     /** Forgets the learned background level, e.g. when listening restarts. */

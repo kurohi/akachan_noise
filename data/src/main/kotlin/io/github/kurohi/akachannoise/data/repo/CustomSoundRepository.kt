@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
@@ -29,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap
 class CustomSoundRepository(
     context: Context,
     private val mixes: MixRepository,
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
 ) {
     private val appContext = context.applicationContext
     private val soundsDir = File(appContext.filesDir, SOUNDS_DIR)
@@ -94,6 +95,14 @@ class CustomSoundRepository(
             runCatching { File(soundsDir, "$id.pcm").delete() }
         }
         mixes.removeCustomSound(id)
+    }
+
+    /**
+     * Fire-and-forget delete for UI teardown paths (leaving the recorder
+     * without saving), where suspending is not possible.
+     */
+    fun deleteAsync(id: String) {
+        scope.launch { delete(id) }
     }
 
     suspend fun rename(id: String, name: String) {

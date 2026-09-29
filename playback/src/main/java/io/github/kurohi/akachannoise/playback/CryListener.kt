@@ -69,6 +69,7 @@ class CryListener(
         val detector = CryDetector(SAMPLE_RATE, sensitivity)
         record = recorder
         running = true
+        _detected.value = false
         thread = Thread(
             { loop(recorder, detector, shouldContinue) },
             "akachan-cry-listener",
@@ -90,6 +91,7 @@ class CryListener(
         record = null
         _level.value = 0f
         _pitchHz.value = 0f
+        _detected.value = false
     }
 
     private fun loop(

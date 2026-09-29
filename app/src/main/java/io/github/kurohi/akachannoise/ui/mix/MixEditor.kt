@@ -1,5 +1,8 @@
 package io.github.kurohi.akachannoise.ui.mix
 
+import android.content.Context
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.media3.session.MediaController
 import io.github.kurohi.akachannoise.data.repo.MixRepository
 import io.github.kurohi.akachannoise.data.repo.SettingsRepository
@@ -8,6 +11,7 @@ import io.github.kurohi.akachannoise.engine.model.LayerSpec
 import io.github.kurohi.akachannoise.engine.model.MixSpec
 import io.github.kurohi.akachannoise.engine.model.SoundCatalog
 import io.github.kurohi.akachannoise.playback.PlaybackController
+import io.github.kurohi.akachannoise.playback.PlaybackService
 import io.github.kurohi.akachannoise.playback.PlaybackState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +27,7 @@ import kotlinx.coroutines.launch
  * and everything is persisted only when the user saves.
  */
 class MixEditor(
+    private val appContext: Context,
     private val playback: PlaybackController,
     private val mixes: MixRepository,
     private val settings: SettingsRepository,
@@ -64,6 +69,15 @@ class MixEditor(
         if (controller != null) {
             controller.play()
         } else {
+            // The session is still connecting (a very fast first tap): start
+            // the service ourselves so the notification and foreground state
+            // appear anyway.
+            runCatching {
+                ContextCompat.startForegroundService(
+                    appContext,
+                    Intent(appContext, PlaybackService::class.java),
+                )
+            }
             playback.play(current)
         }
         startDefaultTimerIfNeeded()

@@ -58,8 +58,11 @@ fun CryTestScreen(container: AppContainer, onBack: () -> Unit) {
         ActivityResultContracts.RequestPermission(),
     ) { result -> granted = result }
 
-    // (Re)start the listener whenever permission or sensitivity changes.
+    // (Re)start the listener whenever permission or sensitivity changes; the
+    // previous one must be released or the microphone would stay open.
     LaunchedEffect(granted, settings.crySensitivity) {
+        listener?.stop()
+        listener = null
         if (!granted) return@LaunchedEffect
         val created = CryListener(settings.crySensitivity) { }
         if (created.start()) listener = created

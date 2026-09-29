@@ -97,6 +97,7 @@ fun RecorderScreen(
     var error by remember { mutableStateOf(false) }
     var noAudio by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
+    var saved by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -115,11 +116,13 @@ fun RecorderScreen(
         }
     }
 
-    // Leaving the screen stops everything and drops an unsaved take.
+    // Leaving the screen stops everything; a take that was never saved is
+    // deleted so it does not silently end up in the sound library.
     DisposableEffect(Unit) {
         onDispose {
             customSounds.recorder.cancel()
             if (previewing) editor.pause()
+            take?.takeIf { !saved }?.let { customSounds.deleteAsync(it.id) }
         }
     }
 
@@ -318,6 +321,7 @@ fun RecorderScreen(
                     OutlinedButton(
                         onClick = {
                             editor.pause()
+                            saved = true
                             scope.launch {
                                 customSounds.delete(ref.id)
                                 onBack()
@@ -330,6 +334,7 @@ fun RecorderScreen(
                     Button(
                         onClick = {
                             editor.pause()
+                            saved = true
                             scope.launch {
                                 customSounds.rename(ref.id, name)
                                 customSounds.setWombFilter(ref.id, wombFilter)

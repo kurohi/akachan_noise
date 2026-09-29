@@ -57,6 +57,7 @@ class AppContainer(context: Context) {
     val mediaController: MediaController? get() = _mediaController.value
 
     val mixEditor = MixEditor(
+        appContext = appContext,
         playback = playback,
         mixes = mixRepository,
         settings = settingsRepository,

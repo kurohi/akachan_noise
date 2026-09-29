@@ -84,23 +84,24 @@ class AudioImporter(private val context: Context) {
 
             val mime = format.getString(MediaFormat.KEY_MIME) ?: return null
             val sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-            val sourceChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-            val channels = sourceChannels.coerceIn(1, 2)
+            val sourceChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT).coerceIn(1, 8)
 
             codec = MediaCodec.createDecoderByType(mime)
             codec.configure(format, null, null, 0)
             codec.start()
 
             val maxFrames = (maxDurationMs * sampleRate / 1000).toInt()
-            val out = FloatArray(maxFrames * channels + channels * 1024)
+            val out = FloatArray(maxFrames * MAX_TARGET_CHANNELS + 4096)
             var written = 0
-            var outputChannels = channels
+            // The decoder's real output layout, which can differ from the
+            // container's; the file always gets at most two channels.
+            var outputChannels = sourceChannels
             var outputRate = sampleRate
 
             val info = MediaCodec.BufferInfo()
             var sawInputEnd = false
             var sawOutputEnd = false
-            while (!sawOutputEnd && written < maxFrames * channels) {
+            while (!sawOutputEnd && written < maxFrames * MAX_TARGET_CHANNELS) {
                 if (!sawInputEnd) {
                     val inputIndex = codec.dequeueInputBuffer(TIMEOUT_US)
                     if (inputIndex >= 0) {
@@ -134,7 +135,7 @@ class AudioImporter(private val context: Context) {
                         outputRate = newFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                         outputChannels = newFormat
                             .getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                            .coerceIn(1, 2)
+                            .coerceIn(1, 8)
                     }
 
                     MediaCodec.INFO_TRY_AGAIN_LATER -> Unit
@@ -148,6 +149,7 @@ class AudioImporter(private val context: Context) {
                                 info,
                                 encoding,
                                 outputChannels,
+                                outputChannels.coerceAtMost(MAX_TARGET_CHANNELS),
                                 out,
                                 written,
                             )
@@ -159,7 +161,7 @@ class AudioImporter(private val context: Context) {
                     }
                 }
             }
-            Decoded(out.copyOf(written), channels, outputRate)
+            Decoded(out.copyOf(written), outputChannels.coerceAtMost(MAX_TARGET_CHANNELS), outputRate)
         } catch (e: Exception) {
             null
         } finally {
@@ -181,29 +183,40 @@ class AudioImporter(private val context: Context) {
         }.getOrDefault(AudioFormat.ENCODING_PCM_16BIT)
     }
 
+    /**
+     * Copies decoded PCM into [out], downmixing to [targetChannels] (one or
+     * two). The decoder's own channel count is used as the interleaving
+     * stride, so files whose container and decoder layouts disagree — a 5.1
+     * track, for example — are read correctly instead of being garbled.
+     */
     private fun appendSamples(
         buffer: ByteBuffer,
         info: MediaCodec.BufferInfo,
         encoding: Int,
-        channels: Int,
+        inputChannels: Int,
+        targetChannels: Int,
         out: FloatArray,
         written: Int,
     ): Int {
+        if (inputChannels <= 0 || targetChannels <= 0) return written
         buffer.position(info.offset)
         buffer.limit(info.offset + info.size)
         var index = written
+        val frame = FloatArray(inputChannels)
         when (encoding) {
             AudioFormat.ENCODING_PCM_FLOAT -> {
                 val floats = buffer.order(ByteOrder.nativeOrder()).asFloatBuffer()
-                while (floats.hasRemaining() && index < out.size) {
-                    out[index++] = floats.get()
+                while (floats.remaining() >= inputChannels && index + targetChannels <= out.size) {
+                    for (c in 0 until inputChannels) frame[c] = floats.get()
+                    for (c in 0 until targetChannels) out[index++] = frame[c]
                 }
             }
 
             else -> {
                 val shorts = buffer.order(ByteOrder.nativeOrder()).asShortBuffer()
-                while (shorts.hasRemaining() && index < out.size) {
-                    out[index++] = shorts.get() / 32768f
+                while (shorts.remaining() >= inputChannels && index + targetChannels <= out.size) {
+                    for (c in 0 until inputChannels) frame[c] = shorts.get() / 32768f
+                    for (c in 0 until targetChannels) out[index++] = frame[c]
                 }
             }
         }
@@ -373,6 +386,9 @@ class AudioImporter(private val context: Context) {
     companion object {
         const val MAX_DURATION_MS = 5 * 60 * 1000L
         const val CROSSFADE_MS = 1200
+
+        /** Mono or stereo; anything wider is downmixed. */
+        const val MAX_TARGET_CHANNELS = 2
         private const val MAX_PEAK = 0.99f
         private const val NORMALIZE_TARGET = 0.1f
         private const val SILENCE_THRESHOLD = 0.004f

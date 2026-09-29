@@ -102,8 +102,11 @@ class CryMonitorService : Service() {
             // Called on the listening thread: hop to the main thread before
             // touching playback state.
             mainHandler.post {
+                // Close the microphone before the mix starts, so the detector
+                // never hears the sound it is playing. Listening resumes when
+                // the mix finishes.
+                stopListening()
                 PlaybackController.get(this).restartFromCry(playMinutes)
-                updateNotification(armed = false)
             }
         }
         val started = cryListener.start(
@@ -117,16 +120,28 @@ class CryMonitorService : Service() {
         updateNotification(armed = false)
     }
 
+    /** Releases the microphone but keeps the service and its window alive. */
+    private fun stopListening() {
+        listener?.stop()
+        listener = null
+        updateNotification(armed = true)
+    }
+
     private fun startTicker() {
         if (ticker?.isActive == true) return
         ticker = scope.launch {
             while (isActive) {
                 delay(TICK_MS)
-                if (windowEndsAt > 0 && System.currentTimeMillis() > windowEndsAt) {
+                val now = System.currentTimeMillis()
+                if (windowEndsAt > 0 && now > windowEndsAt) {
                     PlaybackController.get(this@CryMonitorService).onCryMonitoringStopped()
                     stopSelf()
                     return@launch
                 }
+                // Resume listening once the mix has finished. The service is
+                // already running, so this needs no background service start.
+                val playing = PlaybackController.get(this@CryMonitorService).state.value.playing
+                if (listener == null && !playing && windowEndsAt > 0) startListening()
                 updateNotification(armed = listener == null)
             }
         }
@@ -212,25 +227,34 @@ class CryMonitorService : Service() {
         const val EXTRA_SENSITIVITY = "sensitivity"
         const val EXTRA_PLAY_MINUTES = "play_minutes"
 
-        /** Arms the monitor while the app is visible (required for the mic type). */
+        /**
+         * Arms the monitor while the app is visible (required for the mic
+         * type). Never throws: a rejected background start simply leaves the
+         * feature off for this session.
+         */
         fun arm(context: Context, windowMinutes: Int, sensitivity: Float, playMinutes: Int) {
             val intent = Intent(context, CryMonitorService::class.java)
                 .setAction(ACTION_ARM)
                 .putExtra(EXTRA_WINDOW_MINUTES, windowMinutes)
                 .putExtra(EXTRA_SENSITIVITY, sensitivity)
                 .putExtra(EXTRA_PLAY_MINUTES, playMinutes)
-            ContextCompat.startForegroundService(context, intent)
+            runCatching { ContextCompat.startForegroundService(context, intent) }
         }
 
-        /** Opens the microphone; called when the sleep timer ends. */
+        /**
+         * Asks the monitor to open the microphone when the sleep timer ends.
+         * Android forbids starting a microphone service from the background,
+         * so this is best effort — the running service also resumes listening
+         * on its own once playback stops.
+         */
         fun startListening(context: Context) {
             val intent = Intent(context, CryMonitorService::class.java).setAction(ACTION_LISTEN)
-            ContextCompat.startForegroundService(context, intent)
+            runCatching { ContextCompat.startForegroundService(context, intent) }
         }
 
         fun stop(context: Context) {
             val intent = Intent(context, CryMonitorService::class.java).setAction(ACTION_STOP)
-            context.startService(intent)
+            runCatching { context.startService(intent) }
         }
     }
 }
