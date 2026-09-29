@@ -2,6 +2,7 @@ package io.github.kurohi.akachannoise.engine
 
 import io.github.kurohi.akachannoise.engine.dsp.Rng
 import io.github.kurohi.akachannoise.engine.generators.PulseClock
+import io.github.kurohi.akachannoise.engine.generators.SoundGenerator
 import io.github.kurohi.akachannoise.engine.mix.Mixer
 import io.github.kurohi.akachannoise.engine.model.EngineContext
 import io.github.kurohi.akachannoise.engine.model.MixSpec
@@ -11,6 +12,19 @@ import java.util.concurrent.ConcurrentLinkedQueue
 /** Version metadata for the engine (used in tests and debug screens). */
 object EngineInfo {
     const val VERSION: String = "0.1.0"
+}
+
+/**
+ * Supplies generators for sounds the engine does not know about — user
+ * imported or recorded audio. Implemented by the playback layer, which owns
+ * the PCM files; the engine stays free of Android and of file handling.
+ */
+fun interface CustomSoundResolver {
+    fun create(
+        soundId: String,
+        context: EngineContext,
+        params: Map<String, Float>,
+    ): SoundGenerator?
 }
 
 /**
@@ -24,11 +38,15 @@ object EngineInfo {
 class NoiseEngine(
     val sampleRate: Int,
     seed: Long = DEFAULT_SEED,
+    customResolver: CustomSoundResolver? = null,
 ) {
     private val rng = Rng(seed)
     private val clock = PulseClock(sampleRate, rng)
     private val context = EngineContext(sampleRate, rng, clock)
-    private val mixer = Mixer(sampleRate, context, ::resolveGenerator)
+    private val mixer = Mixer(sampleRate, context) { soundId, params ->
+        customResolver?.create(soundId, context, params)
+            ?: SoundCatalog.createGenerator(soundId, context, params)
+    }
     private val commands = ConcurrentLinkedQueue<EngineCommand>()
 
     /**
@@ -100,8 +118,6 @@ class NoiseEngine(
             }
         }
     }
-
-    private fun resolveGenerator(soundId: String, params: Map<String, Float>) = SoundCatalog.createGenerator(soundId, context, params)
 
     private sealed interface EngineCommand {
         data class Start(val mix: MixSpec, val fadeMs: Int) : EngineCommand

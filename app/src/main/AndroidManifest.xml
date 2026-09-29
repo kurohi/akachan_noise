@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
 
+    <!-- Optional: recording your own sounds and the cry-activated restart.
+         Only ever requested in context, when the user turns the feature on. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/full_backup_content"

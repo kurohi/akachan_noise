@@ -9,6 +9,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
+import io.github.kurohi.akachannoise.engine.CustomSoundResolver
 import io.github.kurohi.akachannoise.engine.NoiseEngine
 import io.github.kurohi.akachannoise.engine.model.MixSpec
 import io.github.kurohi.akachannoise.playback.audio.AudioTrackSink
@@ -46,7 +47,20 @@ class PlaybackController private constructor(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val sink = AudioTrackSink(appContext)
-    private val engine = NoiseEngine(sink.sampleRate)
+
+    /**
+     * Supplies generators for user-imported sounds. Set by the app once the
+     * custom-sound library is available; read on the render thread, hence
+     * volatile.
+     */
+    @Volatile private var customSoundResolver: CustomSoundResolver? = null
+
+    private val engine = NoiseEngine(
+        sampleRate = sink.sampleRate,
+        customResolver = CustomSoundResolver { soundId, context, params ->
+            customSoundResolver?.create(soundId, context, params)
+        },
+    )
     private val renderThread = RenderThread(appContext, engine, sink)
     private val audioManager = appContext.getSystemService(AudioManager::class.java)
 
@@ -159,6 +173,11 @@ class PlaybackController private constructor(context: Context) {
     fun setWarmth(warmth: Float) = engine.setWarmth(warmth)
 
     fun setMono(mono: Boolean) = engine.setMono(mono)
+
+    /** Lets the app play user-imported and recorded sounds. */
+    fun setCustomSoundResolver(resolver: CustomSoundResolver?) {
+        customSoundResolver = resolver
+    }
 
     // ---- Sleep timer --------------------------------------------------------
 

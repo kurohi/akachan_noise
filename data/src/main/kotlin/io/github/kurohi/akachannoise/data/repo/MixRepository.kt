@@ -1,5 +1,6 @@
 package io.github.kurohi.akachannoise.data.repo
 
+import io.github.kurohi.akachannoise.data.model.CustomSoundRef
 import io.github.kurohi.akachannoise.data.model.UserData
 import io.github.kurohi.akachannoise.data.store.UserDataStore
 import io.github.kurohi.akachannoise.engine.model.BuiltInPresets
@@ -125,6 +126,39 @@ class MixRepository(
 
     suspend fun setLastUsed(id: String) {
         store.update { it.copy(lastUsedMixId = id) }
+    }
+
+    // ---- Custom sounds ----------------------------------------------------
+
+    suspend fun addCustomSound(sound: CustomSoundRef) {
+        store.update { data ->
+            data.copy(customSounds = data.customSounds + sound)
+        }
+    }
+
+    suspend fun updateCustomSound(id: String, transform: (CustomSoundRef) -> CustomSoundRef) {
+        store.update { data ->
+            data.copy(
+                customSounds = data.customSounds.map {
+                    if (it.id == id) transform(it) else it
+                },
+            )
+        }
+    }
+
+    /**
+     * Removes a custom sound and any layer that used it, so saved mixes never
+     * point at a file that is gone.
+     */
+    suspend fun removeCustomSound(id: String) {
+        store.update { data ->
+            data.copy(
+                customSounds = data.customSounds.filterNot { it.id == id },
+                mixes = data.mixes.map { mix ->
+                    mix.copy(layers = mix.layers.filterNot { it.soundId == id })
+                },
+            )
+        }
     }
 
     /**

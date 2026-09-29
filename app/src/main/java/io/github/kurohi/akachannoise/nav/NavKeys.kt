@@ -18,6 +18,9 @@ data object MixesKey : NavKey
 data object SettingsKey : NavKey
 
 @Serializable
+data object RecorderKey : NavKey
+
+@Serializable
 data object SleepKey : NavKey
 
 @Serializable

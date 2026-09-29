@@ -1,5 +1,7 @@
 package io.github.kurohi.akachannoise.ui.sounds
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,9 +18,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -60,6 +66,7 @@ private val BROWSABLE_CATEGORIES = listOf(
     SoundCategory.NATURE,
     SoundCategory.HOME,
     SoundCategory.VOICE,
+    SoundCategory.CUSTOM,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,21 +75,43 @@ fun SoundsScreen(
     container: AppContainer,
     onOpenMixer: () -> Unit,
     onOpenTune: (String) -> Unit,
+    onOpenRecorder: () -> Unit,
     onSaved: (String) -> Unit,
 ) {
     val editor = container.mixEditor
     val mix by editor.mix.collectAsStateWithLifecycle()
+    val customSounds by container.customSounds.sounds.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var selectedCategory by remember { mutableStateOf<SoundCategory?>(null) }
     var showSaveDialog by remember { mutableStateOf(false) }
+    var importing by remember { mutableStateOf(false) }
 
     val savedMessage = stringResource(R.string.mix_saved)
     val fullMessage = stringResource(R.string.mixer_full)
+    val importedMessage = stringResource(R.string.my_sounds_imported)
+    val importFailedMessage = stringResource(R.string.my_sounds_import_failed)
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            importing = true
+            scope.launch {
+                val ref = container.customSounds.importFrom(
+                    uri,
+                    "My sound ${customSounds.size + 1}",
+                )
+                importing = false
+                onSaved(if (ref != null) importedMessage else importFailedMessage)
+            }
+        }
+    }
 
     val sounds = remember(selectedCategory) {
         SoundCatalog.specs.filter { selectedCategory == null || it.category == selectedCategory }
     }
     val activeIds = mix.layers.map { it.soundId }.toSet()
+    val showCustom = selectedCategory == SoundCategory.CUSTOM
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.sounds_title)) }) },
@@ -125,6 +154,25 @@ fun SoundsScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                if (showCustom) {
+                    item(key = "action-import") {
+                        ActionTile(
+                            icon = Icons.Filled.Add,
+                            label = stringResource(
+                                if (importing) R.string.my_sounds_importing else R.string.my_sounds_import,
+                            ),
+                            onClick = { if (!importing) importLauncher.launch(arrayOf("audio/*")) },
+                        )
+                    }
+                    item(key = "action-record") {
+                        ActionTile(
+                            icon = Icons.Filled.Mic,
+                            label = stringResource(R.string.my_sounds_record),
+                            onClick = onOpenRecorder,
+                        )
+                    }
+                }
+
                 items(sounds, key = { it.id.id }) { spec ->
                     SoundTileForSpec(
                         spec = spec,
@@ -138,6 +186,34 @@ fun SoundsScreen(
                         },
                         onTune = { onOpenTune(spec.id.id) },
                     )
+                }
+
+                if (showCustom) {
+                    items(customSounds, key = { it.id }) { ref ->
+                        SoundTile(
+                            soundId = ref.id,
+                            name = ref.name,
+                            active = ref.id in activeIds,
+                            onToggle = {
+                                if (ref.id !in activeIds && mix.layers.size >= MixSpec.MAX_LAYERS) {
+                                    onSaved(fullMessage)
+                                } else {
+                                    editor.toggleSound(ref.id)
+                                }
+                            },
+                            onTune = { onOpenTune(ref.id) },
+                        )
+                    }
+                    if (customSounds.isEmpty()) {
+                        item(key = "empty") {
+                            Text(
+                                text = stringResource(R.string.my_sounds_empty),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(vertical = 8.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -155,6 +231,34 @@ fun SoundsScreen(
                 }
             },
         )
+    }
+}
+
+/** A tile that performs an action rather than toggling a layer. */
+@Composable
+private fun ActionTile(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.height(112.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.weight(1f))
+            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 2)
+        }
     }
 }
 

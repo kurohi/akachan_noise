@@ -72,6 +72,37 @@
     <string name="sound_shush">シューッ</string>
     <string name="sound_custom">マイ音</string>
 
+    <!-- My sounds -->
+    <string name="my_sounds_empty">まだ何もありません。ファイルを取り込むか、自分の音を録音してください。すべてこの端末の中に保存されます。</string>
+    <string name="my_sounds_import">音声を取り込む</string>
+    <string name="my_sounds_record">録音</string>
+    <string name="my_sounds_importing">取り込み中…</string>
+    <string name="my_sounds_import_failed">このファイルは読み取れませんでした</string>
+    <string name="my_sounds_imported">マイ音に追加しました</string>
+    <string name="my_sounds_limit">5分を超える音は取り込めません</string>
+    <string name="custom_sound_delete">音を削除</string>
+    <string name="custom_sound_delete_confirm">「%1$s」を削除しますか？使っているミックスからは、その音だけが外れます。</string>
+    <string name="custom_sound_rename">名前を変更</string>
+    <string name="custom_sound_womb_filter">おなかの中フィルター</string>
+    <string name="custom_sound_womb_hint">おなかの中から聞こえるように音をこもらせます。赤ちゃんに届く自分の声のように。</string>
+
+    <!-- Recorder -->
+    <string name="recorder_title">音を録音</string>
+    <string name="recorder_hint">歌ったり、ハミングしたり、シューッと言ってみましょう。最長5分。破棄すると録音はすぐに消えます。</string>
+    <string name="recorder_start">録音</string>
+    <string name="recorder_stop">停止</string>
+    <string name="recorder_preview">試聴</string>
+    <string name="recorder_stop_preview">試聴を止める</string>
+    <string name="recorder_name">名前</string>
+    <string name="recorder_save">音を保存</string>
+    <string name="recorder_discard">破棄</string>
+    <string name="recorder_saved">保存しました</string>
+    <string name="recorder_failed">録音できませんでした。マイクの権限を確認してください</string>
+    <string name="recorder_no_audio">音が録れていません。マイクがミュートになっていないか確認してください</string>
+    <string name="recorder_mic_title">マイクについて</string>
+    <string name="recorder_mic_body">マイクを使うのはこの画面を開いている間だけです。どこにも送信されず、保存しない限り残りません。</string>
+    <string name="recorder_duration">%1$s / 5:00</string>
+
     <!-- Sound parameters -->
     <string name="param_bpm">心拍数</string>
     <string name="param_muffle">こもり具合</string>

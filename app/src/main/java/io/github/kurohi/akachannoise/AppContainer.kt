@@ -4,12 +4,14 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import io.github.kurohi.akachannoise.data.repo.CustomSoundRepository
 import io.github.kurohi.akachannoise.data.repo.MixRepository
 import io.github.kurohi.akachannoise.data.repo.SettingsRepository
 import io.github.kurohi.akachannoise.data.store.DataStoreUserDataStore
 import io.github.kurohi.akachannoise.data.store.PreferencesSettingsStore
 import io.github.kurohi.akachannoise.data.store.SettingsStore
 import io.github.kurohi.akachannoise.data.store.UserDataStore
+import io.github.kurohi.akachannoise.engine.CustomSoundResolver
 import io.github.kurohi.akachannoise.playback.PlaybackController
 import io.github.kurohi.akachannoise.playback.PlaybackService
 import io.github.kurohi.akachannoise.ui.mix.MixEditor
@@ -38,6 +40,8 @@ class AppContainer(context: Context) {
 
     val playback: PlaybackController = PlaybackController.get(appContext)
 
+    val customSounds = CustomSoundRepository(appContext, mixRepository, scope)
+
     /**
      * Play/pause must go through the Media3 session so the service starts in
      * the foreground and the media notification appears. The controller is
@@ -56,6 +60,13 @@ class AppContainer(context: Context) {
     )
 
     init {
+        // Let the engine play the user's own sounds.
+        playback.setCustomSoundResolver(
+            CustomSoundResolver { soundId, context, params ->
+                customSounds.createGenerator(soundId, context, params)
+            },
+        )
+
         scope.launch {
             val token = SessionToken(
                 appContext,

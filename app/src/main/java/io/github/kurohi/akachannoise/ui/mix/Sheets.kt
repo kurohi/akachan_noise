@@ -20,6 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,10 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.kurohi.akachannoise.AppContainer
 import io.github.kurohi.akachannoise.R
+import io.github.kurohi.akachannoise.engine.generators.SampleLoop
 import io.github.kurohi.akachannoise.ui.components.SectionTitle
 import io.github.kurohi.akachannoise.ui.paramLabel
 import io.github.kurohi.akachannoise.ui.paramValueLabel
 import io.github.kurohi.akachannoise.ui.soundLabel
+import kotlinx.coroutines.launch
 
 /** Sleep timer: duration, fade length and the Soothe → Settle step-down. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -278,10 +283,15 @@ fun MixerSheet(
 @Composable
 fun SoundTuneSheet(container: AppContainer, soundId: String, onDismiss: () -> Unit) {
     val editor = container.mixEditor
+    val scope = rememberCoroutineScope()
     val mix by editor.mix.collectAsStateWithLifecycle()
+    val customSounds by container.customSounds.sounds.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState()
     val layer = mix.layers.firstOrNull { it.soundId == soundId }
     val spec = io.github.kurohi.akachannoise.engine.model.SoundCatalog.specFor(soundId)
+    val custom = customSounds.firstOrNull { it.id == soundId }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var customName by remember(soundId) { mutableStateOf(custom?.name.orEmpty()) }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -292,9 +302,84 @@ fun SoundTuneSheet(container: AppContainer, soundId: String, onDismiss: () -> Un
                 .padding(bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(soundLabel(soundId), style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = custom?.name ?: soundLabel(soundId),
+                style = MaterialTheme.typography.titleLarge,
+            )
 
-            if (layer == null || spec == null) {
+            if (custom != null) {
+                // A user sound: womb filter, rename and delete.
+                SectionTitle(stringResource(R.string.custom_sound_womb_filter))
+                Text(
+                    stringResource(R.string.custom_sound_womb_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                val filter = layer?.params?.get(SampleLoop.PARAM_WOMB_FILTER) ?: custom.wombFilter
+                Slider(
+                    value = filter,
+                    onValueChange = { value ->
+                        editor.setLayerParam(soundId, SampleLoop.PARAM_WOMB_FILTER, value)
+                        scope.launch { container.customSounds.setWombFilter(soundId, value) }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                SectionTitle(stringResource(R.string.custom_sound_rename))
+                OutlinedTextField(
+                    value = customName,
+                    onValueChange = { customName = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick = {
+                        scope.launch { container.customSounds.rename(soundId, customName) }
+                    },
+                    enabled = customName.isNotBlank() && customName != custom.name,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.save))
+                }
+
+                layer?.let {
+                    SectionTitle(stringResource(R.string.home_master_volume))
+                    Slider(
+                        value = it.volume,
+                        onValueChange = { volume -> editor.setLayerVolume(soundId, volume) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
+                Button(
+                    onClick = { confirmDelete = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.custom_sound_delete))
+                }
+                if (confirmDelete) {
+                    Text(
+                        stringResource(R.string.custom_sound_delete_confirm, custom.name),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedButton(onClick = { confirmDelete = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    container.customSounds.delete(soundId)
+                                    onDismiss()
+                                }
+                            },
+                        ) {
+                            Text(stringResource(R.string.custom_sound_delete))
+                        }
+                    }
+                }
+            } else if (layer == null || spec == null) {
                 Text(stringResource(R.string.sounds_active))
             } else {
                 spec.params.forEach { param ->

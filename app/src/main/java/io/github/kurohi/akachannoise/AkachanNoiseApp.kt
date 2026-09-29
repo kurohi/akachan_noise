@@ -33,6 +33,7 @@ import io.github.kurohi.akachannoise.nav.HomeKey
 import io.github.kurohi.akachannoise.nav.MixesKey
 import io.github.kurohi.akachannoise.nav.OnboardingKey
 import io.github.kurohi.akachannoise.nav.PrivacyKey
+import io.github.kurohi.akachannoise.nav.RecorderKey
 import io.github.kurohi.akachannoise.nav.SafetyKey
 import io.github.kurohi.akachannoise.nav.SettingsKey
 import io.github.kurohi.akachannoise.nav.SoundsKey
@@ -42,6 +43,7 @@ import io.github.kurohi.akachannoise.ui.mix.SoundTuneSheet
 import io.github.kurohi.akachannoise.ui.mix.TimerSheet
 import io.github.kurohi.akachannoise.ui.mixes.MixesScreen
 import io.github.kurohi.akachannoise.ui.onboarding.OnboardingScreen
+import io.github.kurohi.akachannoise.ui.recorder.RecorderScreen
 import io.github.kurohi.akachannoise.ui.settings.AboutScreen
 import io.github.kurohi.akachannoise.ui.settings.PrivacyScreen
 import io.github.kurohi.akachannoise.ui.settings.SafetyScreen
@@ -115,6 +117,14 @@ fun AkachanNoiseApp(
                 container = container,
                 onOpenMixer = { mixerSheetVisible = true },
                 onOpenTune = { tuneTarget = it },
+                onOpenRecorder = { backStack.add(RecorderKey) },
+                onSaved = { message -> scope.launch { snackbarHostState.showSnackbar(message) } },
+            )
+        }
+        entry(RecorderKey) {
+            RecorderScreen(
+                container = container,
+                onBack = { backStack.removeLastOrNull() },
                 onSaved = { message -> scope.launch { snackbarHostState.showSnackbar(message) } },
             )
         }

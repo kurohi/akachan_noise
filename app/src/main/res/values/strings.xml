@@ -73,6 +73,37 @@
     <string name="sound_shush">Shush</string>
     <string name="sound_custom">My sound</string>
 
+    <!-- My sounds -->
+    <string name="my_sounds_empty">Nothing here yet. Import a file or record your own sound — everything stays on this device.</string>
+    <string name="my_sounds_import">Import audio</string>
+    <string name="my_sounds_record">Record</string>
+    <string name="my_sounds_importing">Importing…</string>
+    <string name="my_sounds_import_failed">That file could not be read</string>
+    <string name="my_sounds_imported">Sound added to My sounds</string>
+    <string name="my_sounds_limit">That sound is longer than five minutes</string>
+    <string name="custom_sound_delete">Delete sound</string>
+    <string name="custom_sound_delete_confirm">Delete “%1$s”? Mixes that use it will lose that layer.</string>
+    <string name="custom_sound_rename">Rename sound</string>
+    <string name="custom_sound_womb_filter">Womb filter</string>
+    <string name="custom_sound_womb_hint">Muffles the sound as if heard from inside, like your voice reaching your baby.</string>
+
+    <!-- Recorder -->
+    <string name="recorder_title">Record a sound</string>
+    <string name="recorder_hint">Sing, hum or shush. Up to five minutes; the take is deleted if you discard it.</string>
+    <string name="recorder_start">Record</string>
+    <string name="recorder_stop">Stop</string>
+    <string name="recorder_preview">Preview</string>
+    <string name="recorder_stop_preview">Stop preview</string>
+    <string name="recorder_name">Name</string>
+    <string name="recorder_save">Save sound</string>
+    <string name="recorder_discard">Discard</string>
+    <string name="recorder_saved">Sound saved</string>
+    <string name="recorder_failed">Recording failed — check the microphone permission</string>
+    <string name="recorder_no_audio">No sound was recorded — check that the microphone is not muted</string>
+    <string name="recorder_mic_title">Microphone</string>
+    <string name="recorder_mic_body">Recording uses the microphone only while this screen is open. Nothing is uploaded and nothing is kept unless you save it.</string>
+    <string name="recorder_duration">%1$s / 5:00</string>
+
     <!-- Sound parameters -->
     <string name="param_bpm">Heart rate</string>
     <string name="param_muffle">Muffled</string>
