@@ -39,7 +39,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -169,14 +171,14 @@ fun MasterVolumeRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // The slider announces its own percentage; give it a name.
+        val label = stringResource(R.string.home_master_volume)
         Slider(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics {
-                    contentDescription = "Volume ${(value * 100).roundToInt()} percent"
-                },
+                .semantics { contentDescription = label },
         )
     }
 }
@@ -190,9 +192,15 @@ fun SoundTile(
     onTune: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    val state = stringResource(if (active) R.string.sounds_active else R.string.sound_not_in_mix)
     Card(
         onClick = onToggle,
-        modifier = modifier.height(112.dp),
+        modifier = modifier
+            .height(112.dp)
+            .semantics {
+                selected = active
+                stateDescription = state
+            },
         colors = CardDefaults.cardColors(
             containerColor = if (active) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -317,7 +325,9 @@ fun MixCard(
             FilledTonalIconButton(onClick = onPlay) {
                 Icon(
                     imageVector = if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = stringResource(R.string.mix_play),
+                    contentDescription = stringResource(
+                        if (playing) R.string.home_pause else R.string.mix_play,
+                    ),
                 )
             }
             trailing()

@@ -1,5 +1,6 @@
 package io.github.kurohi.akachannoise.engine.model
 
+import io.github.kurohi.akachannoise.engine.dsp.Rng
 import io.github.kurohi.akachannoise.engine.generators.BloodFlowGenerator
 import io.github.kurohi.akachannoise.engine.generators.CarRideGenerator
 import io.github.kurohi.akachannoise.engine.generators.FanGenerator
@@ -17,6 +18,7 @@ import io.github.kurohi.akachannoise.engine.generators.StreamGenerator
 import io.github.kurohi.akachannoise.engine.generators.VacuumGenerator
 import io.github.kurohi.akachannoise.engine.generators.WindGenerator
 import io.github.kurohi.akachannoise.engine.generators.WombRumbleGenerator
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.sqrt
 
 /**
@@ -54,6 +56,10 @@ object SoundCatalog {
      * Creates a generator for [soundId] with [params] applied and wrapped in
      * a loudness-calibration scale so every sound sits at [TARGET_RMS] at
      * full volume. Noise generators calibrate themselves internally.
+     *
+     * The scale is measured once per sound at its *default* parameters, so
+     * a parameter (rain intensity, ocean distance…) changes loudness the same
+     * way whether it is dragged live or loaded with a saved mix.
      */
     fun createGenerator(
         soundId: String,
@@ -63,16 +69,31 @@ object SoundCatalog {
         val spec = specFor(soundId) ?: return null
         val generator = spec.factory(context)
         spec.params.forEach { generator.setParam(it.id, params[it.id] ?: it.default) }
-        val seconds = spec.calibrationSeconds
-        if (seconds <= 0.0) return generator
-        // Measure a scratch instance on its own beat clock, so measuring does
-        // not advance the shared clock the live generator is locked to.
-        val scratchClock = PulseClock(context.sampleRate, context.rng)
-        val scratch = spec.factory(EngineContext(context.sampleRate, context.rng, scratchClock))
-        spec.params.forEach { scratch.setParam(it.id, params[it.id] ?: it.default) }
-        val rms = measureRms(scratch, scratchClock, context.sampleRate, seconds)
-        val scale = if (rms < 1e-9f) 1f else (TARGET_RMS / rms).coerceAtMost(MAX_SCALE)
-        return ScaledGenerator(generator, scale)
+        if (spec.calibrationSeconds <= 0.0) return generator
+        return ScaledGenerator(generator, calibrationScale(spec, context.sampleRate))
+    }
+
+    /**
+     * Measures every sound ahead of time. The measurement renders up to 30 s
+     * of audio per sound, which must not happen on the render thread while
+     * something is playing; call this from a background thread at startup.
+     */
+    fun warmUp(sampleRate: Int) {
+        specs.forEach { if (it.calibrationSeconds > 0.0) calibrationScale(it, sampleRate) }
+    }
+
+    private val scales = ConcurrentHashMap<String, Float>()
+
+    private fun calibrationScale(spec: SoundSpec, sampleRate: Int): Float = scales.getOrPut("${spec.id.id}@$sampleRate") {
+        // A private RNG and beat clock: measuring must neither advance the
+        // shared clock the live generators are locked to nor touch the shared
+        // RNG from a warm-up thread.
+        val rng = Rng(CALIBRATION_SEED)
+        val clock = PulseClock(sampleRate, rng)
+        val scratch = spec.factory(EngineContext(sampleRate, rng, clock))
+        spec.params.forEach { scratch.setParam(it.id, it.default) }
+        val rms = measureRms(scratch, clock, sampleRate, spec.calibrationSeconds)
+        if (rms < 1e-9f) 1f else (TARGET_RMS / rms).coerceAtMost(MAX_SCALE)
     }
 
     private fun measureRms(
@@ -249,4 +270,5 @@ object SoundCatalog {
 
     private const val MAX_SCALE = 64f
     private const val CALIBRATION_BLOCK = 1024
+    private const val CALIBRATION_SEED = 0x5EEDL
 }

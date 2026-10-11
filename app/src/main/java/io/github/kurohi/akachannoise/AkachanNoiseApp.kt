@@ -1,7 +1,9 @@
 package io.github.kurohi.akachannoise
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
@@ -9,8 +11,10 @@ import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
@@ -22,12 +26,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import io.github.kurohi.akachannoise.data.model.ThemeMode
 import io.github.kurohi.akachannoise.engine.model.MixSpec
 import io.github.kurohi.akachannoise.nav.CryTestKey
 import io.github.kurohi.akachannoise.nav.HomeKey
@@ -52,9 +58,13 @@ import io.github.kurohi.akachannoise.ui.settings.SafetyScreen
 import io.github.kurohi.akachannoise.ui.settings.SettingsScreen
 import io.github.kurohi.akachannoise.ui.sleep.SleepScreen
 import io.github.kurohi.akachannoise.ui.sounds.SoundsScreen
+import io.github.kurohi.akachannoise.ui.theme.AkachanNoiseTheme
 import kotlinx.coroutines.launch
 
 private val TOP_LEVEL = setOf<NavKey>(HomeKey, SoundsKey, MixesKey)
+
+/** Height of the Material 3 navigation bar, which snackbars sit above. */
+private val NAV_BAR_HEIGHT = 80.dp
 
 /**
  * The app shell: bottom bar / navigation rail for the three top-level
@@ -137,6 +147,18 @@ fun AkachanNoiseApp(
                 container = container,
                 onPlayMix = { editor.playMix(it) },
                 onMessage = { message -> scope.launch { snackbarHostState.showSnackbar(message) } },
+                onUndoable = { message, actionLabel, onUndo ->
+                    scope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = message,
+                            actionLabel = actionLabel,
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Long,
+                        )
+                        if (result == SnackbarResult.ActionPerformed) onUndo()
+                    }
+                },
+                onNewMix = { selectTab(SoundsKey) },
             )
         }
         entry(SettingsKey) {
@@ -165,7 +187,19 @@ fun AkachanNoiseApp(
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            // Every screen has its own Scaffold and the navigation bar pads
+            // itself; insets applied here as well were counted twice (a blank
+            // band under the status bar and an oversized bottom bar).
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            snackbarHost = {
+                SnackbarHost(
+                    snackbarHostState,
+                    // Clear of the navigation bar, as Material places it.
+                    Modifier
+                        .navigationBarsPadding()
+                        .padding(bottom = NAV_BAR_HEIGHT),
+                )
+            },
         ) { padding ->
             NavigationSuiteScaffold(
                 modifier = Modifier.padding(padding),
@@ -209,10 +243,19 @@ fun AkachanNoiseApp(
     }
 
     if (timerSheetVisible) {
-        TimerSheet(
-            container = container,
-            onDismiss = { timerSheetVisible = false },
-        )
+        val sheet = @Composable {
+            TimerSheet(
+                container = container,
+                onDismiss = { timerSheetVisible = false },
+            )
+        }
+        // Opened from the 3 AM screen, the sheet must not flash a bright
+        // day palette: keep it in the night-red theme.
+        if (sleepVisible) {
+            AkachanNoiseTheme(themeMode = ThemeMode.NIGHT_RED, dynamicColor = false) { sheet() }
+        } else {
+            sheet()
+        }
     }
 
     if (mixerSheetVisible) {

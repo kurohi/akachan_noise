@@ -17,8 +17,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -47,15 +49,37 @@ class MixEditor(
             val lastId = mixes.lastUsedMixId.filterNotNull().first()
             mixes.mixById(lastId)?.let { load(it) }
         }
+        // Lowering the volume cap in Settings applies right away, not only
+        // the next time a mix is loaded.
+        scope.launch {
+            settings.settings.map { it.volumeCap }.distinctUntilChanged().collect { cap ->
+                val current = _mix.value
+                if (current.masterVolume > cap) {
+                    _mix.value = current.copy(masterVolume = cap)
+                    playback.setMasterVolume(cap)
+                }
+            }
+        }
     }
 
+    /**
+     * Makes [mix] the current mix. While something is playing the sound
+     * crossfades to it, so the screen never shows one mix while another
+     * one plays.
+     */
     fun load(mix: MixSpec) {
         val capped = mix.copy(
             masterVolume = mix.masterVolume.coerceAtMost(settings.settings.value.volumeCap),
         )
         _mix.value = capped
         _dirty.value = false
-        playback.prepare(capped)
+        if (playback.state.value.playing) playback.switchTo(capped) else playback.prepare(capped)
+    }
+
+    /** Puts back a mix (and its unsaved state) after a temporary detour. */
+    fun restore(mix: MixSpec, dirty: Boolean) {
+        load(mix)
+        _dirty.value = dirty
     }
 
     fun isPlaying(): Boolean = playback.state.value.playing
@@ -81,7 +105,9 @@ class MixEditor(
             playback.play(current)
         }
         startDefaultTimerIfNeeded()
-        scope.launch { mixes.setLastUsed(current.id) }
+        // Only remember mixes that can be found again on the next launch
+        // (not a recorder preview or an unsaved new mix).
+        scope.launch { if (mixes.mixById(current.id) != null) mixes.setLastUsed(current.id) }
     }
 
     /** The timer is on by default, per the safety guidance. */
@@ -227,6 +253,9 @@ class MixEditor(
     }
 
     private fun applyEdit(next: MixSpec, apply: (MixSpec) -> Unit) {
+        // An edit that changes nothing (a sound not in the mix, a slider
+        // released where it started) must not mark the mix as unsaved.
+        if (next == _mix.value) return
         _mix.value = next
         _dirty.value = true
         if (playback.state.value.playing) apply(next) else playback.prepare(next)

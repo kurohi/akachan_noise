@@ -45,7 +45,9 @@ class Mixer(
     fun start(mix: MixSpec, fadeInMs: Int) {
         switchLayers(mix, fadeInMs)
         masterVolumeSmoother.setTargetImmediately(perceptualToGain(mix.masterVolume))
-        masterRamp.begin(0f, perceptualToGain(mix.masterVolume), fadeInMs, sampleRate)
+        // The ramp is a 0..1 envelope on top of the volume. Starting from its
+        // current value keeps a resume during a pause fade click-free.
+        masterRamp.begin(masterRamp.currentValue(), 1f, rampMs(fadeInMs), sampleRate)
         stopPending = false
         applyTone(mix)
     }
@@ -62,10 +64,12 @@ class Mixer(
         stopPending = true
     }
 
-    fun fadeMaster(toVolume: Float, durationMs: Int) {
-        val target = perceptualToGain(toVolume)
-        val current = masterRamp.currentValue() * masterVolumeSmoother.current()
-        masterRamp.begin(current, target, durationMs, sampleRate)
+    /**
+     * Fades the master envelope to [level] (perceptual 0..1, relative to the
+     * user's volume) — 0 for fade-outs, 0.5 for the step-down, 1 to restore.
+     */
+    fun fadeMaster(level: Float, durationMs: Int) {
+        masterRamp.begin(masterRamp.currentValue(), perceptualToGain(level), rampMs(durationMs), sampleRate)
     }
 
     fun setMasterVolume(volume: Float) {
@@ -107,9 +111,9 @@ class Mixer(
 
         java.util.Arrays.fill(out, 0, n, 0f)
 
-        val it = layers.iterator()
-        while (it.hasNext()) {
-            val layer = it.next()
+        var li = 0
+        while (li < layers.size) {
+            val layer = layers[li]
             layer.generator.render(scratch, frames)
             var i = 0
             var j = 0
@@ -120,7 +124,7 @@ class Mixer(
                 i++
                 j += 2
             }
-            if (layer.dead) it.remove()
+            if (layer.dead) layers.removeAt(li) else li++
         }
 
         if (warmthCoefDirty) {
@@ -162,7 +166,9 @@ class Mixer(
         if (stopPending && !masterRamp.isActive && masterRamp.currentValue() <= 0f) {
             layers.clear()
         }
-        isAudible = layers.isNotEmpty() && masterRamp.currentValue() > 0.0001f && volumeGain > 0f
+        // A ramp still in progress counts as audible: a 20 s fade-in starts
+        // far below any threshold and must not let the render thread park.
+        isAudible = layers.isNotEmpty() && (masterRamp.isActive || masterRamp.currentValue() > 0.0001f)
     }
 
     private fun switchLayers(mix: MixSpec, fadeMs: Int) {
@@ -173,7 +179,7 @@ class Mixer(
             if (layer.dying) continue
             if (specs.none { it.soundId == layer.soundId }) {
                 layer.dying = true
-                layer.ramp.begin(layer.gain, 0f, fadeMs, sampleRate)
+                layer.ramp.begin(layer.gain, 0f, rampMs(fadeMs), sampleRate)
             }
         }
 
@@ -184,20 +190,23 @@ class Mixer(
                 val target = perceptualToGain(spec.volume)
                 existing.dying = false
                 existing.targetGain = target
-                if (existing.gain <= 0f) {
-                    existing.ramp.begin(existing.gain, target, fadeMs, sampleRate)
-                }
+                // Always ramp from where the layer is now: a layer revived
+                // mid fade-out would otherwise keep falling to silence first.
+                existing.ramp.begin(existing.gain, target, rampMs(fadeMs), sampleRate)
             } else {
                 val generator = resolver(spec.soundId, spec.params) ?: continue
                 spec.params.forEach { (k, v) -> generator.setParam(k, v) }
                 val layer = Layer(spec.soundId, generator, sampleRate)
                 layer.targetGain = perceptualToGain(spec.volume)
                 layer.gain = 0f
-                layer.ramp.begin(0f, layer.targetGain, fadeMs, sampleRate)
+                layer.ramp.begin(0f, layer.targetGain, rampMs(fadeMs), sampleRate)
                 layers.add(layer)
             }
         }
     }
+
+    /** Every gain change ramps; a zero-length fade would click. */
+    private fun rampMs(ms: Int): Int = ms.coerceAtLeast(MIN_RAMP_MS)
 
     private fun applyTone(mix: MixSpec) {
         setWarmth(mix.warmth)
@@ -236,6 +245,7 @@ class Mixer(
     private companion object {
         const val DEFAULT_BLOCK = 512
         const val LAYER_SMOOTH_MS = 30f
+        const val MIN_RAMP_MS = 10
         const val WARMTH_MAX_HZ = 18000f
         const val WARMTH_MIN_HZ = 2000f
     }

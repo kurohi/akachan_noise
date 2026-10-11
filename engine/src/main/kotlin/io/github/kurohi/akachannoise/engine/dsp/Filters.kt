@@ -3,6 +3,7 @@ package io.github.kurohi.akachannoise.engine.dsp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /** Simple one-pole low-pass / high-pass pair. Cheap and stable at any cutoff. */
 class OnePole {
@@ -144,20 +145,35 @@ class Svf {
     private var band = 0f
 
     fun process(x: Float, cutoffHz: Float, sampleRate: Int, q: Float = 1f): Float {
-        val f = 2.0 * PI * cutoffHz / sampleRate
-        low += (f * band).toFloat()
+        val f = tuning(cutoffHz, sampleRate, q)
+        low += f * band
         val high = x - low - q * band
-        band += (f * high).toFloat()
+        band += f * high
         return low
     }
 
     /** Same update as [process], returning the band-pass output. */
     fun bandPass(x: Float, cutoffHz: Float, sampleRate: Int, q: Float = 1f): Float {
-        val f = 2.0 * PI * cutoffHz / sampleRate
-        low += (f * band).toFloat()
+        val f = tuning(cutoffHz, sampleRate, q)
+        low += f * band
         val high = x - low - q * band
-        band += (f * high).toFloat()
+        band += f * high
         return band
+    }
+
+    /**
+     * The Chamberlin loop is only stable while f² + 2fq < 4. A 6 kHz band at
+     * 44.1 kHz with q = 2 crosses that line and blows up to NaN, so the
+     * tuning is clamped just inside the stable region.
+     */
+    private fun tuning(cutoffHz: Float, sampleRate: Int, q: Float): Float {
+        val f = (2.0 * PI * cutoffHz / sampleRate).toFloat()
+        val limit = (sqrt(q * q + 4f) - q) * STABILITY_MARGIN
+        return if (f < limit) f else limit
+    }
+
+    private companion object {
+        const val STABILITY_MARGIN = 0.95f
     }
 
     fun high(x: Float, cutoffHz: Float, sampleRate: Int, q: Float = 1f): Float = x - process(x, cutoffHz, sampleRate, q)

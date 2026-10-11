@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -43,6 +44,9 @@ fun OnboardingScreen(onDone: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Nothing may sit under the status or gesture bars, on any
+                // phone, in any orientation.
+                .safeDrawingPadding()
                 .padding(28.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {

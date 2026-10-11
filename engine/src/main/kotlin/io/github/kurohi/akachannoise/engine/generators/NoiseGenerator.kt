@@ -76,10 +76,13 @@ class NoiseGenerator(
             val brownR = brownIntegrate(false, whiteR)
             var r = mixColors(color, whiteR, pinkR, brownR, applyScale)
 
-            // Stereo width via mid/side
+            // Stereo width via mid/side. The channels are independent noise,
+            // so narrowing drops the power to (1 + w²) / 2; compensate so the
+            // width slider changes the image, not the loudness.
             if (width < 0.999f) {
-                val mid = (l + r) * 0.5f
-                val side = (l - r) * 0.5f * width
+                val comp = sqrt(2f / (1f + width * width))
+                val mid = (l + r) * 0.5f * comp
+                val side = (l - r) * 0.5f * width * comp
                 l = mid + side
                 r = mid - side
             }

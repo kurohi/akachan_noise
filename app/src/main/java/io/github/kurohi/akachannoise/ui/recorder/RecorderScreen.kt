@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
@@ -44,6 +44,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -106,27 +107,21 @@ fun RecorderScreen(
     val savedMessage = stringResource(R.string.recorder_saved)
     val failedMessage = stringResource(R.string.recorder_failed)
     val noAudioMessage = stringResource(R.string.recorder_no_audio)
+    val soundCount by customSounds.sounds.collectAsStateWithLifecycle()
+    val defaultName = stringResource(R.string.my_sounds_default_name, soundCount.size + 1)
 
-    // Ticking clock while recording, with the five minute cap.
-    LaunchedEffect(recording) {
-        while (recording) {
-            delay(200)
-            elapsedMs += 200
-            if (elapsedMs >= 5 * 60 * 1000L) recording = false
-        }
-    }
-
-    // Leaving the screen stops everything; a take that was never saved is
-    // deleted so it does not silently end up in the sound library.
-    DisposableEffect(Unit) {
-        onDispose {
-            customSounds.recorder.cancel()
-            if (previewing) editor.pause()
-            take?.takeIf { !saved }?.let { customSounds.deleteAsync(it.id) }
-        }
-    }
+    // onDispose runs against the values captured when it was composed, so the
+    // live ones are tracked separately.
+    val savedState = rememberUpdatedState(saved)
+    val previewingState = rememberUpdatedState(previewing)
+    val takeState = rememberUpdatedState(take)
+    val previousMix = remember { editor.mix.value }
+    val wasDirty = remember { editor.dirty.value }
 
     fun startRecording() {
+        // Recording the mix you are already playing would capture it too.
+        editor.pause()
+        previewing = false
         val file = customSounds.newTakeFile()
         takeFile = file
         elapsedMs = 0
@@ -135,13 +130,14 @@ fun RecorderScreen(
         if (!recording) error = true
     }
 
+    /** Processes a finished take into the sound library and previews it. */
     fun stopAndProcess() {
         recording = false
         customSounds.recorder.stop()
         val file = takeFile ?: return
         busy = true
         scope.launch {
-            val ref = customSounds.saveRecording(file, name.ifBlank { "My sound" })
+            val ref = customSounds.saveRecording(file, name.ifBlank { defaultName })
             busy = false
             if (ref == null) {
                 // The microphone opened but the take held no signal.
@@ -168,6 +164,28 @@ fun RecorderScreen(
         }
     }
 
+    // Ticking clock while recording, with the five minute cap. Reaching the
+    // cap has to finish the take, not just stop the clock.
+    LaunchedEffect(recording) {
+        while (recording) {
+            delay(200)
+            elapsedMs += 200
+            if (elapsedMs >= MAX_RECORDING_MS) stopAndProcess()
+        }
+    }
+
+    // Leaving the screen stops everything; a take that was never saved is
+    // deleted so it does not silently end up in the sound library, and the
+    // mix that was open before recording is put back.
+    DisposableEffect(Unit) {
+        onDispose {
+            customSounds.recorder.cancel()
+            if (previewingState.value) editor.pause()
+            takeState.value?.takeIf { !savedState.value }?.let { customSounds.deleteAsync(it.id) }
+            editor.restore(previousMix, wasDirty)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -175,7 +193,7 @@ fun RecorderScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.Filled.ArrowBack,
+                            Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
                         )
                     }
@@ -353,3 +371,6 @@ fun RecorderScreen(
         }
     }
 }
+
+/** The recorder stops itself here; the hint says five minutes. */
+private const val MAX_RECORDING_MS = 5 * 60 * 1000L

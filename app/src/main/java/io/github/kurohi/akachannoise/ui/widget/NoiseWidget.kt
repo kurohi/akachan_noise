@@ -60,7 +60,10 @@ class NoiseWidget : GlanceAppWidget() {
             mixDisplayNameFor(context, it.id, it.name)
         } ?: context.getString(R.string.app_name)
         val subtitle = state.timerRemainingMs?.let {
-            io.github.kurohi.akachannoise.ui.components.formatRemaining(it)
+            context.getString(
+                R.string.timer_remaining,
+                context.getString(R.string.timer_minutes, minutesLeft(it).toInt()),
+            )
         } ?: run {
             val layers = state.currentMix?.layers?.size ?: 0
             context.resources.getQuantityString(R.plurals.home_layers, layers, layers)
@@ -91,6 +94,9 @@ class NoiseWidget : GlanceAppWidget() {
         suspend fun refresh(context: Context) {
             NoiseWidget().updateAll(context)
         }
+
+        /** Whole minutes left, rounded up so "1 min" shows until the end. */
+        fun minutesLeft(remainingMs: Long): Long = (remainingMs + 59_999L) / 60_000L
     }
 }
 

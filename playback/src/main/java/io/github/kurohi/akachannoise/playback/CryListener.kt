@@ -101,6 +101,7 @@ class CryListener(
     ) {
         val shorts = ShortArray(CryDetector.FRAME_SIZE)
         val floats = FloatArray(CryDetector.FRAME_SIZE)
+        var framesSinceDetection = 0
         try {
             recorder.startRecording()
             while (running && shouldContinue()) {
@@ -112,9 +113,19 @@ class CryListener(
                 _pitchHz.value = detector.pitchHz
                 if (triggered) {
                     _detected.value = true
+                    framesSinceDetection = 0
                     detector.reset()
                     detector.resetNoiseFloor()
                     onCry()
+                } else if (_detected.value) {
+                    // Clear the indicator after a few seconds so the test
+                    // screen can be tried again.
+                    framesSinceDetection++
+                    if (framesSinceDetection * CryDetector.FRAME_SIZE >
+                        DETECTED_HOLD_SECONDS * SAMPLE_RATE
+                    ) {
+                        _detected.value = false
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -129,6 +140,9 @@ class CryListener(
         const val SAMPLE_RATE = CryDetector.DEFAULT_SAMPLE_RATE
         private const val CHANNEL = AudioFormat.CHANNEL_IN_MONO
         private const val ENCODING = AudioFormat.ENCODING_PCM_16BIT
+
+        /** How long the "detected" indicator stays on, in seconds. */
+        private const val DETECTED_HOLD_SECONDS = 3
 
         /** True when the app holds the microphone permission. */
         fun hasPermission(context: Context): Boolean = context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) ==

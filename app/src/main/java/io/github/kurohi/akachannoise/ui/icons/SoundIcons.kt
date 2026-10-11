@@ -18,10 +18,10 @@ import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.Toys
 import androidx.compose.material.icons.filled.Water
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Waves
+import androidx.compose.material.icons.filled.WindPower
 import androidx.compose.ui.graphics.vector.ImageVector
 import io.github.kurohi.akachannoise.engine.model.SoundCategory
 import io.github.kurohi.akachannoise.engine.model.SoundId
@@ -40,7 +40,7 @@ object SoundIcons {
         SoundId.RAIN -> Icons.Filled.WaterDrop
         SoundId.STREAM -> Icons.Filled.Water
         SoundId.WIND -> Icons.Filled.Air
-        SoundId.FAN -> Icons.Filled.Toys
+        SoundId.FAN -> Icons.Filled.WindPower
         SoundId.HAIR_DRYER -> Icons.Filled.Dry
         SoundId.VACUUM -> Icons.Filled.CleaningServices
         SoundId.CAR_RIDE -> Icons.Filled.DirectionsCar

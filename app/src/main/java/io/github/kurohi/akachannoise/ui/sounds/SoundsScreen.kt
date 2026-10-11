@@ -26,10 +26,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.kurohi.akachannoise.AppContainer
@@ -55,6 +56,7 @@ import io.github.kurohi.akachannoise.engine.model.SoundCatalog
 import io.github.kurohi.akachannoise.engine.model.SoundCategory
 import io.github.kurohi.akachannoise.engine.model.SoundSpec
 import io.github.kurohi.akachannoise.ui.categoryLabel
+import io.github.kurohi.akachannoise.ui.components.PlayPauseButton
 import io.github.kurohi.akachannoise.ui.components.SoundTile
 import io.github.kurohi.akachannoise.ui.mixDisplayName
 import io.github.kurohi.akachannoise.ui.soundLabel
@@ -80,6 +82,8 @@ fun SoundsScreen(
 ) {
     val editor = container.mixEditor
     val mix by editor.mix.collectAsStateWithLifecycle()
+    val dirty by editor.dirty.collectAsStateWithLifecycle()
+    val playback by editor.playbackState.collectAsStateWithLifecycle()
     val customSounds by container.customSounds.sounds.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var selectedCategory by remember { mutableStateOf<SoundCategory?>(null) }
@@ -90,6 +94,7 @@ fun SoundsScreen(
     val fullMessage = stringResource(R.string.mixer_full)
     val importedMessage = stringResource(R.string.my_sounds_imported)
     val importFailedMessage = stringResource(R.string.my_sounds_import_failed)
+    val defaultName = stringResource(R.string.my_sounds_default_name, customSounds.size + 1)
 
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
@@ -97,10 +102,7 @@ fun SoundsScreen(
         if (uri != null) {
             importing = true
             scope.launch {
-                val ref = container.customSounds.importFrom(
-                    uri,
-                    "My sound ${customSounds.size + 1}",
-                )
+                val ref = container.customSounds.importFrom(uri, defaultName)
                 importing = false
                 onSaved(if (ref != null) importedMessage else importFailedMessage)
             }
@@ -111,13 +113,18 @@ fun SoundsScreen(
         SoundCatalog.specs.filter { selectedCategory == null || it.category == selectedCategory }
     }
     val activeIds = mix.layers.map { it.soundId }.toSet()
-    val showCustom = selectedCategory == SoundCategory.CUSTOM
+    val showCustomActions = selectedCategory == SoundCategory.CUSTOM
+    // "All" really means all: the user's own sounds are listed too.
+    val showCustom = selectedCategory == null || showCustomActions
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.sounds_title)) }) },
         bottomBar = {
             MixTray(
                 mix = mix,
+                playing = playback.playing,
+                canSave = dirty,
+                onTogglePlay = editor::togglePlayPause,
                 onOpenMixer = onOpenMixer,
                 onSave = { showSaveDialog = true },
             )
@@ -154,7 +161,7 @@ fun SoundsScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (showCustom) {
+                if (showCustomActions) {
                     item(key = "action-import") {
                         ActionTile(
                             icon = Icons.Filled.Add,
@@ -204,7 +211,7 @@ fun SoundsScreen(
                             onTune = { onOpenTune(ref.id) },
                         )
                     }
-                    if (customSounds.isEmpty()) {
+                    if (customSounds.isEmpty() && showCustomActions) {
                         item(key = "empty") {
                             Text(
                                 text = stringResource(R.string.my_sounds_empty),
@@ -278,9 +285,19 @@ private fun SoundTileForSpec(
     )
 }
 
-/** The docked tray showing what is in the mix right now. */
+/**
+ * The docked tray showing what is in the mix right now, mini-player style:
+ * you can hear what you are building without leaving the screen.
+ */
 @Composable
-private fun MixTray(mix: MixSpec, onOpenMixer: () -> Unit, onSave: () -> Unit) {
+private fun MixTray(
+    mix: MixSpec,
+    playing: Boolean,
+    canSave: Boolean,
+    onTogglePlay: () -> Unit,
+    onOpenMixer: () -> Unit,
+    onSave: () -> Unit,
+) {
     Surface(
         tonalElevation = 3.dp,
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -288,15 +305,21 @@ private fun MixTray(mix: MixSpec, onOpenMixer: () -> Unit, onSave: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            PlayPauseButton(
+                playing = playing,
+                onClick = onTogglePlay,
+                size = 48.dp,
+            )
             Column(Modifier.weight(1f)) {
                 Text(
                     mixDisplayName(mix.id, mix.name),
                     style = MaterialTheme.typography.titleSmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = if (mix.layers.isEmpty()) {
@@ -308,12 +331,11 @@ private fun MixTray(mix: MixSpec, onOpenMixer: () -> Unit, onSave: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            OutlinedButton(onClick = onOpenMixer) {
-                Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(R.string.mixer))
+            FilledTonalIconButton(onClick = onOpenMixer) {
+                Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.mixer))
             }
-            Button(onClick = onSave) {
+            // Nothing to save until the mix has changed.
+            Button(onClick = onSave, enabled = canSave) {
                 Text(stringResource(R.string.save))
             }
         }

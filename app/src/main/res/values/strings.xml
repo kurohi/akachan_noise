@@ -180,7 +180,6 @@
     <string name="timer_remaining">%1$s left</string>
     <string name="timer_add_15">+15 min</string>
     <string name="timer_cancel">Cancel timer</string>
-    <string name="timer_set">Timer set for %1$d min</string>
 
     <!-- Sleep screen -->
     <string name="sleep_title">Sleep</string>
@@ -243,6 +242,7 @@
     <string name="cry_test_pitch">Pitch %1$d Hz</string>
     <string name="cry_test_no_pitch">No clear pitch</string>
     <string name="cry_test_detected">Cry detected — the mix would start again</string>
+    <string name="cry_test_waiting_hint">Waiting for a cry in the 250-800 Hz range</string>
     <string name="cry_test_listening">Listening…</string>
     <string name="cry_test_stop">Stop</string>
     <string name="cry_test_needs_permission">The microphone permission is needed for this feature.</string>
@@ -284,4 +284,17 @@
     <string name="privacy_mic_body">The microphone is used only for the optional cry-activated restart and for recording your own sounds. Audio is analysed in memory and never stored or sent unless you save it yourself.</string>
     <string name="privacy_permissions_title">Permissions</string>
     <string name="privacy_permissions_body">Playback in the background, and optionally notifications. No location, no contacts, no storage access — files are only opened through the system file picker.</string>
+    <!-- Review pass: accessibility and flow -->
+    <string name="more_options">More options</string>
+    <string name="sound_not_in_mix">Not in this mix</string>
+    <string name="my_sounds_default_name">My sound %1$d</string>
+    <string name="mix_share_send">Share…</string>
+    <string name="mixer_empty">No sounds in this mix yet. Pick some on the Sounds tab.</string>
+    <string name="settings_export_failed">The backup could not be saved</string>
+    <string name="settings_mono">Always mono</string>
+    <string name="settings_mono_hint">Plays every mix in mono — for phones with one speaker</string>
+    <string name="timer_start">Start %1$d min timer</string>
+    <string name="mix_import_title">Add a shared mix</string>
+    <string name="mix_import_hint">Paste the code or link you received</string>
+    <string name="mix_import_action">Add</string>
 </resources>

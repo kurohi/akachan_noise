@@ -24,16 +24,11 @@ class OceanGenerator(
     private var wavePhase = 0f
     private val lpL = OnePole()
     private val lpR = OnePole()
-    private var coefDirty = true
 
     override fun render(out: FloatArray, frames: Int) {
         // Filter coefficients are updated once per block from the wave
         // envelope (the swell is seconds long, so this is plenty).
-        if (coefDirty) {
-            val env = waveEnvelope(wavePhase)
-            applyCutoff(env)
-            coefDirty = false
-        }
+        applyCutoff(waveEnvelope(wavePhase))
         val phaseStep = 1f / (periodSec * sampleRate)
         var i = 0
         var j = 0
@@ -66,16 +61,8 @@ class OceanGenerator(
     override fun setParam(id: String, value: Float) {
         when (id) {
             PARAM_PERIOD -> periodSec = value.coerceIn(5f, 15f)
-
-            PARAM_SIZE -> {
-                size = value.coerceIn(0f, 1f)
-                coefDirty = true
-            }
-
-            PARAM_DISTANCE -> {
-                distance = value.coerceIn(0f, 1f)
-                coefDirty = true
-            }
+            PARAM_SIZE -> size = value.coerceIn(0f, 1f)
+            PARAM_DISTANCE -> distance = value.coerceIn(0f, 1f)
         }
     }
 

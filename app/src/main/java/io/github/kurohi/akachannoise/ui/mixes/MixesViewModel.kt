@@ -2,13 +2,13 @@ package io.github.kurohi.akachannoise.ui.mixes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.kurohi.akachannoise.data.codec.MixCodec
 import io.github.kurohi.akachannoise.data.repo.MixRepository
 import io.github.kurohi.akachannoise.engine.model.MixSpec
 import io.github.kurohi.akachannoise.ui.mix.MixEditor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,10 +29,24 @@ class MixesViewModel(
         .map { if (it.playing) it.currentMix?.id else null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    private val _lastDeleted = MutableStateFlow<MixSpec?>(null)
-    val lastDeleted: StateFlow<MixSpec?> = _lastDeleted.asStateFlow()
+    private val lastDeleted = MutableStateFlow<MixSpec?>(null)
 
     fun play(mix: MixSpec) = editor.playMix(mix)
+
+    fun pause() = editor.pause()
+
+    /** Adds a mix from a pasted share link or bare code. */
+    fun importShared(text: String, onResult: (Boolean) -> Unit) {
+        val mix = MixCodec.mixFromShareUri(text) ?: MixCodec.decodeShareCode(text)
+        if (mix == null) {
+            onResult(false)
+            return
+        }
+        viewModelScope.launch {
+            mixes.importMix(mix)
+            onResult(true)
+        }
+    }
 
     fun toggleFavorite(mix: MixSpec) {
         val favorite = mix.id !in mixes.favoriteIds.value
@@ -41,20 +55,16 @@ class MixesViewModel(
 
     fun delete(mix: MixSpec) {
         viewModelScope.launch {
-            _lastDeleted.value = mix
+            lastDeleted.value = mix
             mixes.deleteMix(mix.id)
         }
     }
 
     fun undoDelete() {
         viewModelScope.launch {
-            _lastDeleted.value?.let { mixes.saveMix(it) }
-            _lastDeleted.value = null
+            lastDeleted.value?.let { mixes.saveMix(it) }
+            lastDeleted.value = null
         }
-    }
-
-    fun clearUndo() {
-        _lastDeleted.value = null
     }
 
     fun duplicate(mix: MixSpec) {

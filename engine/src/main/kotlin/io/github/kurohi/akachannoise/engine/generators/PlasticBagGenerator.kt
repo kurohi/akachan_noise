@@ -49,8 +49,11 @@ class PlasticBagGenerator(
             val rawL = rng.nextBipolar()
             val rawR = rng.nextBipolar()
             val e = crackleEnv.next() * crackleGain
-            out[j] = hpL.high(rawL) * e * CRACKLE_GAIN + hpL.high(rawL) * BED_GAIN
-            out[j + 1] = hpR.high(rawR) * e * CRACKLE_GAIN + hpR.high(rawR) * BED_GAIN
+            // One filter step per sample: calling high() twice would advance
+            // the filter state twice and change its response.
+            val gain = e * CRACKLE_GAIN + BED_GAIN
+            out[j] = hpL.high(rawL) * gain
+            out[j + 1] = hpR.high(rawR) * gain
             i++
             j += 2
         }

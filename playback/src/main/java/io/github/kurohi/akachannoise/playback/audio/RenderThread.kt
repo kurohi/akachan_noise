@@ -69,6 +69,11 @@ class RenderThread(
                 parked = false
             }
             acquireWakeLock()
+            // Render and queue a few blocks before starting the track. The
+            // first block is the expensive one — it builds the generators and
+            // measures their loudness — and starting the track first leaves
+            // the buffer empty long enough for the hardware to underrun.
+            prefill(buffer)
             sink.play()
             while (!shutdown) {
                 synchronized(lock) {
@@ -84,6 +89,14 @@ class RenderThread(
                     throw e
                 }
             }
+        }
+    }
+
+    /** Fills part of the track buffer while it is still paused. */
+    private fun prefill(buffer: FloatArray) {
+        repeat(PREFILL_BLOCKS) {
+            engine.render(buffer, BLOCK_FRAMES)
+            sink.write(buffer, BLOCK_FRAMES)
         }
     }
 
@@ -103,6 +116,9 @@ class RenderThread(
 
     companion object {
         const val BLOCK_FRAMES = 512
+
+        /** ~100 ms of pre-roll at 48 kHz, comfortably inside the buffer. */
+        private const val PREFILL_BLOCKS = 9
         private const val SHUTDOWN_JOIN_MS = 2_000L
         private const val WAKE_LOCK_TIMEOUT_MS = 12 * 60 * 60 * 1000L // 12 h safety cap
     }

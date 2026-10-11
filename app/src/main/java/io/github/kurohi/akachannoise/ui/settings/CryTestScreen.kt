@@ -76,6 +76,8 @@ fun CryTestScreen(container: AppContainer, onBack: () -> Unit) {
         .collectAsStateWithLifecycle()
     val pitch by (listener?.pitchHz ?: remember { kotlinx.coroutines.flow.MutableStateFlow(0f) })
         .collectAsStateWithLifecycle()
+    val detected by (listener?.detected ?: remember { kotlinx.coroutines.flow.MutableStateFlow(false) })
+        .collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -146,8 +148,16 @@ fun CryTestScreen(container: AppContainer, onBack: () -> Unit) {
             Spacer(Modifier.height(8.dp))
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    containerColor = if (detected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.primaryContainer
+                    },
+                    contentColor = if (detected) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    },
                 ),
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -158,13 +168,19 @@ fun CryTestScreen(container: AppContainer, onBack: () -> Unit) {
                 ) {
                     Icon(Icons.Filled.GraphicEq, contentDescription = null)
                     Text(
-                        stringResource(R.string.cry_test_listening),
+                        text = if (detected) {
+                            stringResource(R.string.cry_test_detected)
+                        } else {
+                            stringResource(R.string.cry_test_listening)
+                        },
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    Text(
-                        stringResource(R.string.cry_test_detected),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    if (!detected) {
+                        Text(
+                            stringResource(R.string.cry_test_waiting_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             }
         }

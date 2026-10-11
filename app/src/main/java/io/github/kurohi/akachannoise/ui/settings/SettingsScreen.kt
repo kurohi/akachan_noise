@@ -4,6 +4,7 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,9 +32,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +52,9 @@ import io.github.kurohi.akachannoise.R
 import io.github.kurohi.akachannoise.data.model.ThemeMode
 import io.github.kurohi.akachannoise.playback.CryListener
 import io.github.kurohi.akachannoise.ui.components.SectionTitle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,16 +87,27 @@ fun SettingsScreen(
     val exportedMessage = stringResource(R.string.settings_exported)
     val importedMessage = stringResource(R.string.settings_imported)
     val importFailedMessage = stringResource(R.string.settings_import_failed)
+    val exportFailedMessage = stringResource(R.string.settings_export_failed)
+    val scope = rememberCoroutineScope()
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri ->
         if (uri != null) {
-            runCatching {
-                context.contentResolver.openOutputStream(uri)?.use { stream ->
-                    stream.write(vm.exportBackup().encodeToByteArray())
+            scope.launch {
+                // Serializing and writing a backup is I/O; keep it off the
+                // main thread, and say so when it fails instead of failing
+                // silently.
+                val ok = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val json = vm.exportBackup()
+                        context.contentResolver.openOutputStream(uri)?.use { stream ->
+                            stream.write(json.encodeToByteArray())
+                        } ?: error("no output stream")
+                    }.isSuccess
                 }
-            }.onSuccess { onMessage(exportedMessage) }
+                onMessage(if (ok) exportedMessage else exportFailedMessage)
+            }
         }
     }
 
@@ -117,7 +135,7 @@ fun SettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.Filled.ArrowBack,
+                            Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
                         )
                     }
@@ -179,8 +197,8 @@ fun SettingsScreen(
             )
 
             SettingSwitch(
-                title = stringResource(R.string.mixer_mono),
-                hint = stringResource(R.string.mixer_mono_hint),
+                title = stringResource(R.string.settings_mono),
+                hint = stringResource(R.string.settings_mono_hint),
                 checked = settings.mono,
                 onCheckedChange = vm::setMono,
             )
@@ -193,7 +211,12 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(vertical = 4.dp),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 ThemeMode.entries.forEach { mode ->
                     FilterChip(
                         selected = settings.theme == mode,
@@ -210,6 +233,7 @@ fun SettingsScreen(
                                     ThemeMode.NIGHT_RED ->
                                         stringResource(R.string.settings_theme_night_red)
                                 },
+                                maxLines = 1,
                             )
                         },
                     )
@@ -327,7 +351,10 @@ fun SettingsScreen(
                         confirmDelete = false
                     },
                 ) {
-                    Text(stringResource(R.string.settings_delete_all))
+                    Text(
+                        stringResource(R.string.settings_delete_all),
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
             },
             dismissButton = {
@@ -339,6 +366,10 @@ fun SettingsScreen(
     }
 }
 
+/**
+ * A setting slider that writes to storage when the gesture ends rather than
+ * on every frame: dragging used to queue a DataStore write per pixel.
+ */
 @Composable
 private fun SettingSlider(
     title: String,
@@ -349,6 +380,10 @@ private fun SettingSlider(
     onValueChange: (Float) -> Unit,
     steps: Int = 0,
 ) {
+    var dragged by remember { mutableFloatStateOf(value) }
+    // Re-sync when the stored value changes underneath us.
+    LaunchedEffect(value) { dragged = value }
+
     Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -369,10 +404,11 @@ private fun SettingSlider(
             )
         }
         Slider(
-            value = value,
+            value = dragged,
             valueRange = valueRange,
             steps = steps,
-            onValueChange = onValueChange,
+            onValueChange = { dragged = it },
+            onValueChangeFinished = { onValueChange(dragged) },
         )
     }
 }

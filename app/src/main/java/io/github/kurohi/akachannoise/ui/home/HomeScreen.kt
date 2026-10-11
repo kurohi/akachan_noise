@@ -165,12 +165,15 @@ fun HomeScreen(
                 SectionTitle(stringResource(R.string.nav_mixes))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(favorites, key = { it.id }) { favorite ->
+                        val playingThis = playback.playing && playback.currentMix?.id == favorite.id
                         Box(Modifier.fillParentMaxWidth(0.85f)) {
                             MixCard(
                                 mix = favorite,
-                                playing = playback.playing && playback.currentMix?.id == favorite.id,
+                                playing = playingThis,
                                 favorite = true,
-                                onPlay = { onPlayMix(favorite) },
+                                // Its button shows "pause" while it plays, so
+                                // it must pause rather than restart it.
+                                onPlay = { if (playingThis) editor.pause() else onPlayMix(favorite) },
                                 onToggleFavorite = { editor.setFavorite(favorite.id, false) },
                             )
                         }

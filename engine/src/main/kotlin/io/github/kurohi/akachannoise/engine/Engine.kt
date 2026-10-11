@@ -78,9 +78,12 @@ class NoiseEngine(
         commands.add(EngineCommand.Stop(fadeOutMs))
     }
 
-    /** Fades the master gain to [volume] (perceptual 0..1) over [durationMs]. */
-    fun fadeMaster(volume: Float, durationMs: Int) {
-        commands.add(EngineCommand.FadeMaster(volume, durationMs))
+    /**
+     * Fades the master envelope to [level] (perceptual 0..1, relative to the
+     * master volume) over [durationMs]: 0 fades out, 1 restores full volume.
+     */
+    fun fadeMaster(level: Float, durationMs: Int) {
+        commands.add(EngineCommand.FadeMaster(level, durationMs))
     }
 
     fun setMasterVolume(volume: Float) {

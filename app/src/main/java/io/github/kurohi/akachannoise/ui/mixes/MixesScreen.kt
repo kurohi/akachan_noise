@@ -1,26 +1,29 @@
 package io.github.kurohi.akachannoise.ui.mixes
 
+import android.content.ClipData
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.AlertDialog
@@ -28,26 +31,28 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -57,7 +62,8 @@ import io.github.kurohi.akachannoise.data.codec.MixCodec
 import io.github.kurohi.akachannoise.engine.model.MixSpec
 import io.github.kurohi.akachannoise.ui.components.MixCard
 import io.github.kurohi.akachannoise.ui.components.SectionTitle
-import kotlinx.coroutines.delay
+import io.github.kurohi.akachannoise.ui.mixDisplayName
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +71,8 @@ fun MixesScreen(
     container: AppContainer,
     onPlayMix: (MixSpec) -> Unit,
     onMessage: (String) -> Unit,
+    onUndoable: (message: String, actionLabel: String, onUndo: () -> Unit) -> Unit,
+    onNewMix: () -> Unit,
 ) {
     val vm: MixesViewModel = viewModel(
         initializer = { MixesViewModel(container.mixRepository, container.mixEditor) },
@@ -72,55 +80,49 @@ fun MixesScreen(
     val userMixes by vm.userMixes.collectAsStateWithLifecycle()
     val favoriteIds by vm.favoriteIds.collectAsStateWithLifecycle()
     val playingId by vm.playingMixId.collectAsStateWithLifecycle()
-    val lastDeleted by vm.lastDeleted.collectAsStateWithLifecycle()
 
     var renameTarget by remember { mutableStateOf<MixSpec?>(null) }
     var shareTarget by remember { mutableStateOf<MixSpec?>(null) }
+    var showImport by remember { mutableStateOf(false) }
     val newMixName = stringResource(R.string.mixes_new)
+    val deletedMessage = stringResource(R.string.mix_delete_undo)
+    val undoLabel = stringResource(R.string.undo)
+    val importedMessage = stringResource(R.string.mix_imported)
+    val invalidMessage = stringResource(R.string.mix_import_invalid)
 
-    LaunchedEffect(lastDeleted) {
-        if (lastDeleted != null) {
-            delay(6_000)
-            vm.clearUndo()
-        }
+    // The play button of the mix that is playing pauses it.
+    fun togglePlay(mix: MixSpec) = if (playingId == mix.id) vm.pause() else vm.play(mix)
+
+    fun delete(mix: MixSpec) {
+        vm.delete(mix)
+        onUndoable(deletedMessage, undoLabel) { vm.undoDelete() }
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.mixes_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.mixes_title)) },
+                actions = {
+                    IconButton(onClick = { showImport = true }) {
+                        Icon(
+                            Icons.Filled.AddLink,
+                            contentDescription = stringResource(R.string.mix_import_title),
+                        )
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
+                    // An empty mix is only useful with sounds in it: go and
+                    // pick them.
                     vm.newMix(newMixName)
-                    onMessage(newMixName)
+                    onNewMix()
                 },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.mixes_new)) },
             )
-        },
-        bottomBar = {
-            lastDeleted?.let { deleted ->
-                Surface(
-                    tonalElevation = 3.dp,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.mix_delete_undo),
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        )
-                        TextButton(onClick = { vm.undoDelete() }) {
-                            Text(stringResource(R.string.undo))
-                        }
-                    }
-                }
-            }
         },
     ) { padding ->
         LazyColumn(
@@ -136,20 +138,14 @@ fun MixesScreen(
                     mix = preset,
                     playing = playingId == preset.id,
                     favorite = preset.id in favoriteIds,
-                    onPlay = { vm.play(preset) },
+                    onPlay = { togglePlay(preset) },
                     onToggleFavorite = { vm.toggleFavorite(preset) },
                     trailing = {
                         MixOverflowMenu(
-                            mix = preset,
                             favorite = preset.id in favoriteIds,
-                            canEdit = false,
-                            onPlay = { vm.play(preset) },
                             onToggleFavorite = { vm.toggleFavorite(preset) },
                             onDuplicate = { vm.duplicate(preset) },
-                            onRename = { renameTarget = preset },
                             onShare = { shareTarget = preset },
-                            onMove = { delta -> vm.move(preset, delta) },
-                            onDelete = { vm.delete(preset) },
                         )
                     },
                 )
@@ -178,25 +174,25 @@ fun MixesScreen(
                     }
                 }
             } else {
-                items(userMixes, key = { it.id }) { mix ->
+                itemsIndexed(userMixes, key = { _, mix -> mix.id }) { index, mix ->
                     MixCard(
                         mix = mix,
                         playing = playingId == mix.id,
                         favorite = mix.id in favoriteIds,
-                        onPlay = { vm.play(mix) },
+                        onPlay = { togglePlay(mix) },
                         onToggleFavorite = { vm.toggleFavorite(mix) },
+                        modifier = Modifier.animateItem(),
                         trailing = {
                             MixOverflowMenu(
-                                mix = mix,
                                 favorite = mix.id in favoriteIds,
-                                canEdit = true,
-                                onPlay = { vm.play(mix) },
                                 onToggleFavorite = { vm.toggleFavorite(mix) },
                                 onDuplicate = { vm.duplicate(mix) },
-                                onRename = { renameTarget = mix },
                                 onShare = { shareTarget = mix },
-                                onMove = { delta -> vm.move(mix, delta) },
-                                onDelete = { vm.delete(mix) },
+                                onRename = { renameTarget = mix },
+                                // Only offer moves that can actually happen.
+                                onMoveUp = if (index > 0) ({ vm.move(mix, -1) }) else null,
+                                onMoveDown = if (index < userMixes.lastIndex) ({ vm.move(mix, 1) }) else null,
+                                onDelete = { delete(mix) },
                             )
                         },
                     )
@@ -221,34 +217,40 @@ fun MixesScreen(
     shareTarget?.let { target ->
         ShareDialog(mix = target, onDismiss = { shareTarget = null })
     }
+
+    if (showImport) {
+        ImportDialog(
+            onDismiss = { showImport = false },
+            onImport = { text ->
+                showImport = false
+                vm.importShared(text) { ok -> onMessage(if (ok) importedMessage else invalidMessage) }
+            },
+        )
+    }
 }
 
+/**
+ * Secondary actions for a mix. Play and favourite already have their own
+ * buttons on the card, so they are not repeated here; edit actions are
+ * passed only for the user's own mixes.
+ */
 @Composable
 private fun MixOverflowMenu(
-    mix: MixSpec,
     favorite: Boolean,
-    canEdit: Boolean,
-    onPlay: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDuplicate: () -> Unit,
-    onRename: () -> Unit,
     onShare: () -> Unit,
-    onMove: (Int) -> Unit,
-    onDelete: () -> Unit,
+    onRename: (() -> Unit)? = null,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = null)
+            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.mix_play)) },
-                onClick = {
-                    expanded = false
-                    onPlay()
-                },
-            )
             DropdownMenuItem(
                 text = {
                     Text(
@@ -270,6 +272,7 @@ private fun MixOverflowMenu(
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.mix_duplicate)) },
+                leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null) },
                 onClick = {
                     expanded = false
                     onDuplicate()
@@ -277,43 +280,52 @@ private fun MixOverflowMenu(
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.mix_share)) },
-                leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
                 onClick = {
                     expanded = false
                     onShare()
                 },
             )
-            if (canEdit) {
+            onRename?.let { action ->
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.mix_rename)) },
                     leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                     onClick = {
                         expanded = false
-                        onRename()
+                        action()
                     },
                 )
+            }
+            onMoveUp?.let { action ->
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.mix_move_up)) },
                     leadingIcon = { Icon(Icons.Filled.ArrowUpward, contentDescription = null) },
                     onClick = {
                         expanded = false
-                        onMove(-1)
+                        action()
                     },
                 )
+            }
+            onMoveDown?.let { action ->
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.mix_move_down)) },
                     leadingIcon = { Icon(Icons.Filled.ArrowDownward, contentDescription = null) },
                     onClick = {
                         expanded = false
-                        onMove(1)
+                        action()
                     },
                 )
+            }
+            onDelete?.let { action ->
+                HorizontalDivider()
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.mix_delete)) },
-                    leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+                    text = { Text(stringResource(R.string.mix_delete), color = MaterialTheme.colorScheme.error) },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                    },
                     onClick = {
                         expanded = false
-                        onDelete()
+                        action()
                     },
                 )
             }
@@ -348,13 +360,18 @@ private fun RenameDialog(initial: String, onDismiss: () -> Unit, onConfirm: (Str
 
 @Composable
 private fun ShareDialog(mix: MixSpec, onDismiss: () -> Unit) {
-    val clipboard = LocalClipboardManager.current
-    var code by remember(mix.id) { mutableStateOf("") }
-    LaunchedEffect(mix.id) { code = MixCodec.encodeShareCode(mix) }
+    val context = LocalContext.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    // A link rather than a bare code: tapping it opens the app straight to
+    // the import, and it can also be pasted into "Add a shared mix".
+    val link = remember(mix) { MixCodec.shareUri(mix) }
+    val title = mixDisplayName(mix.id, mix.name)
+    val chooserTitle = stringResource(R.string.mix_share_title)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.mix_share_title)) },
+        title = { Text(chooserTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
@@ -362,27 +379,67 @@ private fun ShareDialog(mix: MixSpec, onDismiss: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    text = code,
+                    text = link,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    clipboard.setText(AnnotatedString(code))
+                    val send = Intent(Intent.ACTION_SEND)
+                        .setType("text/plain")
+                        .putExtra(Intent.EXTRA_SUBJECT, title)
+                        .putExtra(Intent.EXTRA_TEXT, link)
+                    context.startActivity(Intent.createChooser(send, chooserTitle))
+                    onDismiss()
+                },
+            ) {
+                Text(stringResource(R.string.mix_share_send))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    scope.launch {
+                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(chooserTitle, link)))
+                    }
                     onDismiss()
                 },
             ) {
                 Text(stringResource(R.string.mix_share_copy))
             }
         },
+    )
+}
+
+/** Paste a share link (or the bare code inside it) to add someone's mix. */
+@Composable
+private fun ImportDialog(onDismiss: () -> Unit, onImport: (String) -> Unit) {
+    var text by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.mix_import_title)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text(stringResource(R.string.mix_import_hint)) },
+                maxLines = 4,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onImport(text.trim()) }, enabled = text.isNotBlank()) {
+                Text(stringResource(R.string.mix_import_action))
+            }
+        },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
 }

@@ -2,6 +2,7 @@ package io.github.kurohi.akachannoise.ui.mix
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +14,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -29,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.kurohi.akachannoise.AppContainer
 import io.github.kurohi.akachannoise.R
 import io.github.kurohi.akachannoise.engine.generators.SampleLoop
+import io.github.kurohi.akachannoise.engine.generators.ShushGenerator
 import io.github.kurohi.akachannoise.ui.components.SectionTitle
 import io.github.kurohi.akachannoise.ui.paramLabel
 import io.github.kurohi.akachannoise.ui.paramValueLabel
@@ -60,6 +65,14 @@ fun TimerSheet(container: AppContainer, onDismiss: () -> Unit) {
     var minutes by remember { mutableIntStateOf(settings.defaultTimerMinutes) }
     var fadeSeconds by remember { mutableIntStateOf(settings.timerFadeSeconds) }
     var stepDown by remember { mutableStateOf(settings.stepDownEnabled) }
+    // The user's own defaults always get a chip, even when they are not one
+    // of the presets (otherwise nothing would look selected).
+    val minuteOptions = remember(settings.defaultTimerMinutes) {
+        (DURATION_OPTIONS + settings.defaultTimerMinutes).filter { it > 0 }.distinct().sorted()
+    }
+    val fadeOptions = remember(settings.timerFadeSeconds) {
+        (FADE_OPTIONS + settings.timerFadeSeconds).distinct().sorted()
+    }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -83,20 +96,18 @@ fun TimerSheet(container: AppContainer, onDismiss: () -> Unit) {
                 )
             }
 
-            SectionTitle(stringResource(R.string.timer_title))
-            Row(
+            // Wraps instead of running off the edge on narrow phones.
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                listOf(15, 30, 45, 60, 90, 120).forEach { option ->
+                minuteOptions.forEach { option ->
                     FilterChip(
                         selected = minutes == option,
                         onClick = { minutes = option },
-                        label = { Text("$option") },
+                        label = { Text(stringResource(R.string.timer_minutes, option)) },
                     )
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = minutes == 0,
                     onClick = { minutes = 0 },
@@ -105,8 +116,8 @@ fun TimerSheet(container: AppContainer, onDismiss: () -> Unit) {
             }
 
             SectionTitle(stringResource(R.string.timer_fade_out))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(0, 5, 10, 30).forEach { option ->
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                fadeOptions.forEach { option ->
                     FilterChip(
                         selected = fadeSeconds == option,
                         onClick = { fadeSeconds = option },
@@ -143,6 +154,7 @@ fun TimerSheet(container: AppContainer, onDismiss: () -> Unit) {
             }
 
             Spacer(Modifier.height(4.dp))
+            // One primary action that says exactly what will happen.
             Button(
                 onClick = {
                     if (minutes > 0) {
@@ -155,27 +167,19 @@ fun TimerSheet(container: AppContainer, onDismiss: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    if (minutes > 0) {
-                        stringResource(R.string.timer_minutes, minutes)
-                    } else {
-                        stringResource(R.string.timer_cancel)
+                    when {
+                        minutes > 0 -> stringResource(R.string.timer_start, minutes)
+                        playback.timerRemainingMs != null -> stringResource(R.string.timer_cancel)
+                        else -> stringResource(R.string.timer_keep_playing)
                     },
                 )
-            }
-            if (playback.timerRemainingMs != null) {
-                TextButton(
-                    onClick = {
-                        editor.cancelTimer()
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.timer_cancel))
-                }
             }
         }
     }
 }
+
+private val DURATION_OPTIONS = listOf(15, 30, 45, 60, 90, 120)
+private val FADE_OPTIONS = listOf(0, 5, 10, 30)
 
 /** All layers of the current mix, with per-sound volume and master controls. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -204,6 +208,14 @@ fun MixerSheet(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            if (mix.layers.isEmpty()) {
+                Text(
+                    stringResource(R.string.mixer_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             mix.layers.forEach { layer ->
                 Column(Modifier.fillMaxWidth()) {
@@ -315,12 +327,18 @@ fun SoundTuneSheet(container: AppContainer, soundId: String, onDismiss: () -> Un
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                val filter = layer?.params?.get(SampleLoop.PARAM_WOMB_FILTER) ?: custom.wombFilter
+                var filter by remember(soundId) {
+                    mutableFloatStateOf(layer?.params?.get(SampleLoop.PARAM_WOMB_FILTER) ?: custom.wombFilter)
+                }
                 Slider(
                     value = filter,
                     onValueChange = { value ->
+                        filter = value
                         editor.setLayerParam(soundId, SampleLoop.PARAM_WOMB_FILTER, value)
-                        scope.launch { container.customSounds.setWombFilter(soundId, value) }
+                    },
+                    // Persist once per gesture, not on every drag frame.
+                    onValueChangeFinished = {
+                        scope.launch { container.customSounds.setWombFilter(soundId, filter) }
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -351,36 +369,51 @@ fun SoundTuneSheet(container: AppContainer, soundId: String, onDismiss: () -> Un
                     )
                 }
 
-                Button(
+                // Destructive, so it looks destructive and asks first.
+                OutlinedButton(
                     onClick = { confirmDelete = true },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
+                    Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
                     Text(stringResource(R.string.custom_sound_delete))
                 }
                 if (confirmDelete) {
-                    Text(
-                        stringResource(R.string.custom_sound_delete_confirm, custom.name),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
+                    AlertDialog(
+                        onDismissRequest = { confirmDelete = false },
+                        title = { Text(stringResource(R.string.custom_sound_delete)) },
+                        text = { Text(stringResource(R.string.custom_sound_delete_confirm, custom.name)) },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    confirmDelete = false
+                                    // Out of the playing mix first, so the
+                                    // layer fades instead of lingering.
+                                    editor.removeSound(soundId)
+                                    scope.launch {
+                                        container.customSounds.delete(soundId)
+                                        onDismiss()
+                                    }
+                                },
+                            ) {
+                                Text(
+                                    stringResource(R.string.custom_sound_delete),
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { confirmDelete = false }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        },
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(onClick = { confirmDelete = false }) {
-                            Text(stringResource(R.string.cancel))
-                        }
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    container.customSounds.delete(soundId)
-                                    onDismiss()
-                                }
-                            },
-                        ) {
-                            Text(stringResource(R.string.custom_sound_delete))
-                        }
-                    }
                 }
             } else if (layer == null || spec == null) {
-                Text(stringResource(R.string.sounds_active))
+                Text(stringResource(R.string.sound_not_in_mix))
             } else {
                 spec.params.forEach { param ->
                     val value = layer.params[param.id] ?: param.default
@@ -402,6 +435,9 @@ fun SoundTuneSheet(container: AppContainer, soundId: String, onDismiss: () -> Un
                         Slider(
                             value = value,
                             valueRange = param.min..param.max,
+                            // Shush rhythm has three settings (continuous,
+                            // slow, fast): snap instead of a fake continuum.
+                            steps = if (param.id == ShushGenerator.PARAM_RHYTHM) 1 else 0,
                             onValueChange = { editor.setLayerParam(soundId, param.id, it) },
                             modifier = Modifier.fillMaxWidth(),
                         )

@@ -36,6 +36,7 @@ class HeartbeatGenerator(
     private var s2FiredForBeat = -1L
     private val thumpLp = OnePole()
     private var thumpCoefDirty = true
+    private val pitchDropRate = 1.0 / (PITCH_DROP_SECONDS * sampleRate)
 
     override fun render(out: FloatArray, frames: Int) {
         if (thumpCoefDirty) {
@@ -66,7 +67,7 @@ class HeartbeatGenerator(
             var s = 0f
             val e1 = s1Env.next()
             if (e1 > 0f) {
-                val f = S1_LOW_HZ + (S1_HIGH_HZ - S1_LOW_HZ) * exp(-s1Frames * PITCH_DROP_RATE).toFloat()
+                val f = S1_LOW_HZ + (S1_HIGH_HZ - S1_LOW_HZ) * exp(-s1Frames * pitchDropRate).toFloat()
                 s1Phase += f / sampleRate
                 s1Phase -= s1Phase.toLong()
                 s += e1 * (sin(s1Phase * TWO_PI).toFloat() + thumpLp.low(rng.nextBipolar()) * THUMP_NOISE)
@@ -74,7 +75,7 @@ class HeartbeatGenerator(
             }
             val e2 = s2Env.next()
             if (e2 > 0f) {
-                val f = S2_LOW_HZ + (S2_HIGH_HZ - S2_LOW_HZ) * exp(-s2Frames * PITCH_DROP_RATE).toFloat()
+                val f = S2_LOW_HZ + (S2_HIGH_HZ - S2_LOW_HZ) * exp(-s2Frames * pitchDropRate).toFloat()
                 s2Phase += f / sampleRate
                 s2Phase -= s2Phase.toLong()
                 s += e2 * S2_GAIN * (sin(s2Phase * TWO_PI).toFloat() + thumpLp.low(rng.nextBipolar()) * THUMP_NOISE)
@@ -127,7 +128,7 @@ class HeartbeatGenerator(
         private const val S2_GAIN = 0.6f
         private const val S2_OFFSET_BEATS = 0.18f
         private const val THUMP_NOISE = 0.45f
-        private const val PITCH_DROP_RATE = 1.0 / (0.045 * 48000)
+        private const val PITCH_DROP_SECONDS = 0.045
         private const val TWO_PI = PI * 2.0
     }
 }

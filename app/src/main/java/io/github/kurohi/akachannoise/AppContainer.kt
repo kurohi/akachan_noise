@@ -24,8 +24,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+
+/** What the widget shows; it is redrawn only when this changes. */
+private data class WidgetSnapshot(
+    val playing: Boolean,
+    val mix: Triple<String, String, Int>?,
+    val timerMinutes: Long?,
+    val favorites: List<Pair<String, String>>,
+)
 
 /**
  * Manual dependency container — no DI framework, no annotation processing.
@@ -87,6 +97,7 @@ class AppContainer(context: Context) {
                     windowMinutes = settings.cryWindowHours * 60,
                     playMinutes = settings.cryRestartMinutes,
                 )
+                playback.setForceMono(settings.mono)
             }
         }
 
@@ -98,7 +109,16 @@ class AppContainer(context: Context) {
             }
         }
         scope.launch {
-            playback.state.collect { NoiseWidget.refresh(appContext) }
+            // The timer ticks every second; the widget only shows whole
+            // minutes, so redraw it when something it displays changes.
+            combine(playback.state, mixRepository.favoriteMixes) { state, favorites ->
+                WidgetSnapshot(
+                    playing = state.playing,
+                    mix = state.currentMix?.let { Triple(it.id, it.name, it.layers.size) },
+                    timerMinutes = state.timerRemainingMs?.let { NoiseWidget.minutesLeft(it) },
+                    favorites = favorites.take(2).map { it.id to it.name },
+                )
+            }.distinctUntilChanged().collect { NoiseWidget.refresh(appContext) }
         }
 
         scope.launch {

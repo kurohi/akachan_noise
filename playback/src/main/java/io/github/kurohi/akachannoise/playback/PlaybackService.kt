@@ -8,6 +8,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -40,9 +42,12 @@ class PlaybackService : MediaSessionService() {
         // Mirror controller state into the session so the notification and
         // lock-screen controls reflect what the engine is doing.
         scope.launch {
-            controller.state.collect {
-                player.onControllerStateChanged()
-            }
+            // Only what the session shows; the timer tick changes the state
+            // every second and must not rebuild the notification each time.
+            controller.state
+                .map { it.playing to it.currentMix }
+                .distinctUntilChanged()
+                .collect { player.onControllerStateChanged() }
         }
     }
 
